@@ -1,0 +1,8 @@
+{
+  "name": "remix-ivc.cx-model",
+  "description": "Imported from GitHub: JakeDot/cgeo",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
