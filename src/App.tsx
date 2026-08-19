@@ -757,7 +757,9 @@ export default function App() {
   const isDiff = modifiers.includes('diff') || modifiers.includes('Δdiff') || baseTarget.endsWith('/diff') || baseTarget === 'diff';
   const isSubObjects = modifiers.includes('subobjects') || modifiers.includes('sub-objects') || baseTarget.endsWith('/subobjects') || baseTarget.endsWith('/sub-objects');
   const isWire = modifiers.includes('wire') || modifiers.includes('socket') || modifiers.includes('raw-wire') || baseTarget.endsWith('/wire');
-  const isDeltaView = isRaw || isProps || isDb || isDiff || isSubObjects || isWire;
+  const isPrompts = modifiers.includes('prompts') || modifiers.includes('Δprompts') || baseTarget.endsWith('/Δprompts') || baseTarget.endsWith('/prompts');
+  const isModelState = modifiers.includes('model') || modifiers.includes('model-state') || baseTarget.endsWith('/model') || modifiers.includes('modelstate');
+  const isDeltaView = isRaw || isProps || isDb || isDiff || isSubObjects || isWire || isPrompts || isModelState;
 
   const isPm = modifiers.includes('pm');
   const isBookmarks = modifiers.includes('bookmarks');
@@ -997,6 +999,12 @@ export default function App() {
     } else if (trimmed === '/wire') {
       setAddress(`${baseTarget}+wire`);
       setDeltaViewTab('wire');
+    } else if (trimmed === '/prompts' || trimmed === '/Δprompts') {
+      setAddress(`${baseTarget}+prompts`);
+      setDeltaViewTab('prompts');
+    } else if (trimmed === '/model') {
+      setAddress(`${baseTarget}+model`);
+      setDeltaViewTab('model');
     }
     setCommandInput('');
   };
@@ -2775,8 +2783,8 @@ export default function App() {
       );
     }
 
-    // 1. RAW MODE RENDERING
-    if (isRaw) {
+    // 1. ΔVIEW / RAW / PROPS / DB / WIRE RENDERING
+    if (isDeltaView) {
       let debugObj: any = { error: "Unresolvable object" };
       
       if (matchedPrefixDescriptor) {
@@ -2860,15 +2868,651 @@ export default function App() {
         debugObj = { address: baseTarget, status: "404 Object Not Found" };
       }
 
+      const activeTab = deltaViewTab;
+      const TargetProps = getObjectProps(baseTarget);
+      const TargetSubObjects = getGeneratedSubObjects(baseTarget);
+
+      const isModelTarget = baseTarget.startsWith('$');
+
+      const tabs = [
+        { id: 'json', label: 'JSON (+raw)' },
+        { id: 'props', label: '§PROPS' },
+        { id: 'subobjects', label: '/SUB_OBJECTS' },
+        { id: 'db', label: 'DB (+db)' },
+        { id: 'diff', label: 'ΔDIFF (+diff)' },
+        { id: 'wire', label: 'WIRE (+wire)' }
+      ];
+
+      if (isModelTarget) {
+        tabs.push({ id: 'prompts', label: 'ΔPROMPTS' });
+        tabs.push({ id: 'model', label: 'MODEL_STATE' });
+      }
+
       return (
-        <div className="p-4 overflow-x-auto h-full">
-          <div className="mb-4 flex items-center space-x-2 text-[#7ee787] border-b border-[#30363d] pb-2">
-            <Code className="w-4 h-4" />
-            <span className="text-xs font-mono uppercase tracking-wider">Object Inspector: {address}</span>
+        <div className="flex flex-col h-[calc(100vh-140px)] bg-slate-950 text-slate-200 pb-16 overflow-hidden">
+          {/* Top Navbar for Delta View */}
+          <div className="flex flex-wrap items-center bg-slate-900 border-b border-slate-800 p-2 gap-2 text-xs font-mono select-none">
+            <span className="text-slate-400 font-bold px-2 py-1 bg-slate-950 border border-slate-800 rounded">
+              ΔVIEW_MATRIX: <span className="text-blue-400">{baseTarget}</span>
+            </span>
+            <div className="flex-1"></div>
+            {tabs.map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => {
+                  setDeltaViewTab(tab.id as any);
+                  setAddress(`${baseTarget}+${tab.id === 'json' ? 'raw' : tab.id}`);
+                }}
+                className={`px-3 py-1.5 rounded transition-colors border ${
+                  activeTab === tab.id
+                    ? 'bg-blue-900/40 text-blue-300 border-blue-800/60 font-bold'
+                    : 'bg-slate-800 text-slate-400 border-transparent hover:bg-slate-700 hover:text-slate-200'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+            <button
+              onClick={() => setAddress(baseTarget)}
+              className="px-3 py-1.5 bg-red-950/40 text-red-400 border border-red-900/60 rounded hover:bg-red-900/60 transition-colors ml-2"
+              title="Close Matrix View"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
           </div>
-          <pre className="text-[10px] sm:text-[11px] font-mono text-[#7ee787] leading-relaxed">
-            {JSON.stringify(debugObj, null, 2)}
-          </pre>
+
+          {/* Active Tab Content Area */}
+          <div className="flex-1 overflow-y-auto p-4 relative">
+            {copiedNotification && (
+              <div className="absolute top-6 left-1/2 -translate-x-1/2 z-50 bg-emerald-600 text-white px-3 py-1.5 rounded-full text-xs font-bold shadow-lg flex items-center space-x-1.5 animate-in fade-in slide-in-from-top-4">
+                <Check className="w-3.5 h-3.5" />
+                <span>{copiedNotification}</span>
+              </div>
+            )}
+
+            {/* JSON RAW TAB */}
+            {activeTab === 'json' && (
+              <div className="bg-[#0d1117] rounded-lg border border-[#30363d] p-4 font-mono text-[11px] sm:text-[12px] text-[#7ee787] overflow-x-auto h-full">
+                <div className="flex items-center justify-between mb-4 border-b border-[#30363d] pb-2">
+                  <div className="flex items-center space-x-2">
+                    <Code className="w-4 h-4 text-slate-500" />
+                    <span className="uppercase tracking-wider text-slate-400 font-bold">Standard Serialization</span>
+                  </div>
+                  <button onClick={() => copyToClipboard(JSON.stringify(debugObj, null, 2), 'Copied JSON')} className="text-slate-500 hover:text-slate-300 transition-colors">
+                    <Copy className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+                <pre>{JSON.stringify(debugObj, null, 2)}</pre>
+              </div>
+            )}
+
+            {/* PROPS TAB */}
+            {activeTab === 'props' && (
+              <div className="space-y-4 font-sans h-full flex flex-col">
+                <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between bg-slate-900/50 p-3 rounded-lg border border-slate-800">
+                  <div className="flex items-center space-x-2 text-indigo-400 font-mono text-sm">
+                    <Settings className="w-4 h-4" />
+                    <span className="font-bold">§PROPS MATRIX</span>
+                  </div>
+                  <div className="flex items-center space-x-2 w-full sm:w-auto">
+                    <div className="relative flex-1 sm:w-64">
+                      <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-500" />
+                      <input
+                        type="text"
+                        placeholder="Filter property key..."
+                        value={propsSearchFilter}
+                        onChange={(e) => setPropsSearchFilter(e.target.value)}
+                        className="w-full bg-slate-950 border border-slate-700 rounded text-xs px-8 py-1.5 text-slate-200 focus:outline-none focus:border-indigo-500"
+                      />
+                    </div>
+                    <button
+                      onClick={() => setShowAddPropModal(true)}
+                      className="bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1.5 rounded text-xs font-bold flex items-center justify-center space-x-1"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span className="hidden sm:inline">Add Prop</span>
+                    </button>
+                    <button
+                      onClick={() => resetObjectProps(baseTarget)}
+                      className="bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded text-xs font-bold flex items-center justify-center border border-slate-700 hover:border-slate-600"
+                      title="Reset to prototype defaults"
+                    >
+                      <RotateCcw className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+
+                <div className="flex-1 overflow-y-auto bg-slate-950 border border-slate-800 rounded-lg">
+                  <table className="w-full text-left text-xs text-slate-300">
+                    <thead className="bg-slate-900 text-slate-400 border-b border-slate-800 sticky top-0 z-10 font-mono text-[10px] uppercase">
+                      <tr>
+                        <th className="px-3 py-2 font-medium">Property Key</th>
+                        <th className="px-3 py-2 font-medium">Value</th>
+                        <th className="px-3 py-2 font-medium hidden md:table-cell">Type</th>
+                        <th className="px-3 py-2 font-medium hidden lg:table-cell">Origin</th>
+                        <th className="px-3 py-2 font-medium hidden xl:table-cell">Rule</th>
+                        <th className="px-3 py-2 font-medium text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-800/50 font-mono">
+                      {TargetProps.filter(p => p.key.toLowerCase().includes(propsSearchFilter.toLowerCase())).length === 0 ? (
+                        <tr>
+                          <td colSpan={6} className="px-3 py-8 text-center text-slate-500 font-sans italic">
+                            No properties found.
+                          </td>
+                        </tr>
+                      ) : (
+                        TargetProps.filter(p => p.key.toLowerCase().includes(propsSearchFilter.toLowerCase())).map(prop => (
+                          <tr key={prop.id} className="hover:bg-slate-900/40 transition-colors group">
+                            <td className="px-3 py-2">
+                              <span className="text-blue-300">{prop.key}</span>
+                              {prop.description && (
+                                <span className="block text-[10px] text-slate-500 font-sans mt-0.5">{prop.description}</span>
+                              )}
+                            </td>
+                            <td className="px-3 py-2">
+                              {editingPropId === prop.id ? (
+                                <div className="flex items-center space-x-1">
+                                  <input
+                                    type="text"
+                                    value={editingPropVal}
+                                    onChange={(e) => setEditingPropVal(e.target.value)}
+                                    onKeyDown={(e) => {
+                                      if (e.key === 'Enter') {
+                                        updateObjectProp(baseTarget, prop.id, editingPropVal);
+                                        setEditingPropId(null);
+                                      } else if (e.key === 'Escape') {
+                                        setEditingPropId(null);
+                                      }
+                                    }}
+                                    className="bg-slate-950 border border-blue-500 rounded px-2 py-0.5 text-xs text-blue-200 w-full focus:outline-none"
+                                    autoFocus
+                                  />
+                                  <button onClick={() => { updateObjectProp(baseTarget, prop.id, editingPropVal); setEditingPropId(null); }} className="p-1 text-emerald-400 hover:bg-emerald-900/30 rounded"><Check className="w-3.5 h-3.5" /></button>
+                                  <button onClick={() => setEditingPropId(null)} className="p-1 text-slate-400 hover:bg-slate-800 rounded"><X className="w-3.5 h-3.5" /></button>
+                                </div>
+                              ) : (
+                                <div 
+                                  className={`truncate max-w-[200px] sm:max-w-[300px] cursor-text ${prop.isReadOnly ? 'text-slate-500 italic' : 'text-emerald-300'}`}
+                                  onDoubleClick={() => { if (!prop.isReadOnly) { setEditingPropId(prop.id); setEditingPropVal(String(prop.value)); } }}
+                                  title="Double-click to edit (if not read-only)"
+                                >
+                                  {typeof prop.value === 'object' ? JSON.stringify(prop.value) : String(prop.value)}
+                                </div>
+                              )}
+                            </td>
+                            <td className="px-3 py-2 hidden md:table-cell text-slate-400">{prop.type}</td>
+                            <td className="px-3 py-2 hidden lg:table-cell">
+                              <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold ${
+                                prop.origin === 'PROTOTYPE' ? 'bg-slate-800 text-slate-400 border border-slate-700' :
+                                prop.origin === 'OVERRIDDEN' ? 'bg-amber-950 text-amber-400 border border-amber-900' :
+                                prop.origin === 'INHERITED' ? 'bg-purple-950 text-purple-400 border border-purple-900' :
+                                'bg-blue-950 text-blue-400 border border-blue-900'
+                              }`}>
+                                {prop.origin}
+                              </span>
+                            </td>
+                            <td className="px-3 py-2 hidden xl:table-cell text-slate-500 text-[10px]">{prop.schemaRule || '-'}</td>
+                            <td className="px-3 py-2 text-right opacity-0 group-hover:opacity-100 transition-opacity">
+                              <div className="flex items-center justify-end space-x-1">
+                                {!prop.isReadOnly && (
+                                  <button onClick={() => { setEditingPropId(prop.id); setEditingPropVal(String(prop.value)); }} className="p-1 text-blue-400 hover:bg-blue-900/30 rounded" title="Edit Property">
+                                    <Edit2 className="w-3.5 h-3.5" />
+                                  </button>
+                                )}
+                                {!prop.isReadOnly && (
+                                  <button onClick={() => deleteObjectProp(baseTarget, prop.id)} className="p-1 text-red-400 hover:bg-red-900/30 rounded" title="Delete Property">
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  </button>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Add Prop Modal overlay */}
+                {showAddPropModal && (
+                  <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                    <div className="bg-slate-900 border border-slate-700 rounded-xl w-full max-w-md shadow-2xl overflow-hidden flex flex-col">
+                      <div className="flex items-center justify-between p-3 border-b border-slate-800 bg-slate-800/50">
+                        <h3 className="font-bold text-slate-200 text-sm font-mono flex items-center"><Plus className="w-4 h-4 mr-2 text-indigo-400"/> New Dynamic Property</h3>
+                        <button onClick={() => setShowAddPropModal(false)} className="text-slate-400 hover:text-white"><X className="w-4 h-4" /></button>
+                      </div>
+                      <div className="p-4 space-y-3 font-sans text-sm">
+                        <div>
+                          <label className="block text-xs text-slate-400 mb-1 font-bold">Property Key (Namespace)</label>
+                          <input type="text" value={newPropKey} onChange={(e) => setNewPropKey(e.target.value)} placeholder="e.g. custom.flag" className="w-full bg-slate-950 border border-slate-700 rounded px-3 py-2 text-slate-200 focus:outline-none focus:border-indigo-500 font-mono text-xs" />
+                        </div>
+                        <div>
+                          <label className="block text-xs text-slate-400 mb-1 font-bold">Data Type</label>
+                          <select value={newPropType} onChange={(e) => setNewPropType(e.target.value as any)} className="w-full bg-slate-950 border border-slate-700 rounded px-3 py-2 text-slate-200 focus:outline-none focus:border-indigo-500 font-mono text-xs">
+                            <option value="string">String</option>
+                            <option value="number">Number</option>
+                            <option value="boolean">Boolean</option>
+                            <option value="json">JSON Object</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-xs text-slate-400 mb-1 font-bold">Value</label>
+                          <input type="text" value={newPropVal} onChange={(e) => setNewPropVal(e.target.value)} placeholder="Enter value..." className="w-full bg-slate-950 border border-slate-700 rounded px-3 py-2 text-slate-200 focus:outline-none focus:border-indigo-500 font-mono text-xs" />
+                        </div>
+                      </div>
+                      <div className="p-3 bg-slate-800/50 border-t border-slate-800 flex justify-end space-x-2">
+                        <button onClick={() => setShowAddPropModal(false)} className="px-4 py-1.5 text-xs font-bold text-slate-300 hover:bg-slate-800 rounded transition-colors">Cancel</button>
+                        <button 
+                          onClick={() => {
+                            if (newPropKey.trim()) {
+                              let finalVal: any = newPropVal;
+                              if (newPropType === 'number') finalVal = Number(newPropVal) || 0;
+                              if (newPropType === 'boolean') finalVal = newPropVal === 'true' || newPropVal === '1';
+                              if (newPropType === 'json') { try { finalVal = JSON.parse(newPropVal); } catch { finalVal = { error: 'invalid json' }; } }
+                              
+                              addObjectProp(baseTarget, {
+                                id: `pr-dyn-${Date.now()}`,
+                                key: newPropKey.trim(),
+                                value: finalVal,
+                                type: newPropType,
+                                origin: 'DYNAMIC_CUSTOM',
+                                description: 'User-defined dynamic property',
+                                updatedAt: new Date().toLocaleTimeString('en-US', { hour12: false })
+                              });
+                              setNewPropKey('');
+                              setNewPropVal('');
+                              setShowAddPropModal(false);
+                            }
+                          }}
+                          className="px-4 py-1.5 text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white rounded transition-colors"
+                        >
+                          Save Property
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* SUBOBJECTS TAB */}
+            {activeTab === 'subobjects' && (
+              <div className="space-y-4 font-sans h-full flex flex-col">
+                <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between bg-slate-900/50 p-3 rounded-lg border border-slate-800">
+                  <div className="flex items-center space-x-2 text-fuchsia-400 font-mono text-sm">
+                    <FolderTree className="w-4 h-4" />
+                    <span className="font-bold">SUBOBJECT DISCOVERY</span>
+                  </div>
+                  <div className="flex items-center space-x-2 w-full sm:w-auto">
+                    <div className="relative flex-1 sm:w-64">
+                      <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-500" />
+                      <input
+                        type="text"
+                        placeholder="Filter subobjects..."
+                        value={subObjectSearchFilter}
+                        onChange={(e) => setSubObjectSearchFilter(e.target.value)}
+                        className="w-full bg-slate-950 border border-slate-700 rounded text-xs px-8 py-1.5 text-slate-200 focus:outline-none focus:border-fuchsia-500"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex-1 overflow-y-auto">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {TargetSubObjects.filter(s => s.path.toLowerCase().includes(subObjectSearchFilter.toLowerCase()) || s.description.toLowerCase().includes(subObjectSearchFilter.toLowerCase())).length === 0 ? (
+                      <div className="col-span-full py-8 text-center text-slate-500 italic">No subobjects discovered for this node.</div>
+                    ) : (
+                      TargetSubObjects.filter(s => s.path.toLowerCase().includes(subObjectSearchFilter.toLowerCase()) || s.description.toLowerCase().includes(subObjectSearchFilter.toLowerCase())).map((sub, idx) => (
+                        <div 
+                          key={idx} 
+                          onClick={() => setAddress(sub.path)}
+                          className="bg-slate-900 border border-slate-800 hover:border-fuchsia-700/50 rounded-lg p-3 cursor-pointer transition-colors group flex flex-col h-full"
+                        >
+                          <div className="flex items-start justify-between mb-2">
+                            <div className="flex items-center space-x-2 font-mono text-sm font-bold text-slate-200 group-hover:text-fuchsia-300 transition-colors truncate">
+                              {sub.type === 'channel' ? <Hash className="w-3.5 h-3.5 text-blue-400 shrink-0" /> :
+                               sub.type === 'query_facet' ? <Search className="w-3.5 h-3.5 text-amber-400 shrink-0" /> :
+                               sub.type === 'db' ? <Database className="w-3.5 h-3.5 text-emerald-400 shrink-0" /> :
+                               <Settings className="w-3.5 h-3.5 text-slate-400 shrink-0" />}
+                              <span className="truncate">{sub.name}</span>
+                            </div>
+                            {sub.isEphemeral && (
+                              <span className="px-1.5 py-0.5 bg-amber-950/60 text-amber-400 border border-amber-900/60 rounded text-[9px] uppercase font-bold shrink-0">
+                                Volatile
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-xs text-slate-400 mb-3 flex-1">{sub.description}</p>
+                          <div className="flex items-center justify-between mt-auto pt-2 border-t border-slate-800/60">
+                            <div className="flex items-center space-x-1 font-mono text-[10px] text-slate-500">
+                              <Shield className="w-3 h-3" />
+                              <span>{sub.inheritedModes}</span>
+                            </div>
+                            {sub.activeListeners && (
+                              <div className="flex items-center space-x-1 font-mono text-[10px] text-emerald-500">
+                                <Activity className="w-3 h-3" />
+                                <span>{sub.activeListeners} LSN</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* DATABASE TAB (+db) */}
+            {activeTab === 'db' && (() => {
+              const db = getDatabaseRepresentation(baseTarget);
+              return (
+                <div className="space-y-4 font-sans h-full flex flex-col">
+                  <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between bg-slate-900/50 p-3 rounded-lg border border-slate-800">
+                    <div className="flex items-center space-x-2 text-emerald-400 font-mono text-sm">
+                      <Database className="w-4 h-4" />
+                      <span className="font-bold">RELATIONAL DB PROXY</span>
+                    </div>
+                  </div>
+
+                  <div className="bg-slate-900 border border-slate-800 rounded-lg p-3 flex flex-col space-y-2">
+                    <div className="flex items-center space-x-2">
+                      <Terminal className="w-4 h-4 text-slate-500" />
+                      <span className="text-xs font-mono font-bold text-slate-400">SQL CONSOLE</span>
+                    </div>
+                    <div className="flex space-x-2">
+                      <input
+                        type="text"
+                        value={dbSqlQuery}
+                        onChange={(e) => setDbSqlQuery(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            setDbQueryCustomOutput(executeDbSqlQuery(dbSqlQuery, baseTarget));
+                          }
+                        }}
+                        placeholder="SELECT * FROM IVC_PROPS WHERE is_readonly = 1;"
+                        className="flex-1 bg-[#0d1117] border border-[#30363d] rounded px-3 py-2 text-emerald-300 font-mono text-xs focus:outline-none focus:border-emerald-500"
+                      />
+                      <button 
+                        onClick={() => setDbQueryCustomOutput(executeDbSqlQuery(dbSqlQuery, baseTarget))}
+                        className="bg-emerald-800 hover:bg-emerald-700 text-white px-4 py-2 rounded text-xs font-bold transition-colors font-mono"
+                      >
+                        EXEC
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="flex-1 overflow-y-auto space-y-4">
+                    {dbQueryCustomOutput && (
+                      <div className="bg-slate-950 border border-emerald-900/50 rounded-lg overflow-hidden">
+                        <div className="bg-emerald-950/40 border-b border-emerald-900/50 px-3 py-2 flex items-center justify-between">
+                          <span className="text-[10px] font-mono text-emerald-400 font-bold tracking-wider">QUERY RESULT</span>
+                          <button onClick={() => setDbQueryCustomOutput(null)} className="text-slate-500 hover:text-white"><X className="w-3.5 h-3.5"/></button>
+                        </div>
+                        <div className="overflow-x-auto">
+                          <table className="w-full text-left font-mono text-[11px] text-slate-300 whitespace-nowrap">
+                            <thead className="bg-slate-900/50 text-slate-400 border-b border-slate-800">
+                              <tr>
+                                {dbQueryCustomOutput.columns.map((c, i) => <th key={i} className="px-3 py-1.5 font-medium">{c}</th>)}
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-800/50">
+                              {dbQueryCustomOutput.rows.length === 0 ? (
+                                <tr><td colSpan={dbQueryCustomOutput.columns.length} className="px-3 py-4 text-center text-slate-500 italic font-sans">0 rows returned.</td></tr>
+                              ) : (
+                                dbQueryCustomOutput.rows.map((row, i) => (
+                                  <tr key={i} className="hover:bg-slate-900/30">
+                                    {row.map((cell, j) => <td key={j} className="px-3 py-1.5">{String(cell)}</td>)}
+                                  </tr>
+                                ))
+                              )}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+                      {/* Objects Table */}
+                      <div className="bg-slate-950 border border-slate-800 rounded-lg overflow-hidden flex flex-col h-64">
+                        <div className="bg-slate-900 border-b border-slate-800 px-3 py-2 flex items-center justify-between shrink-0">
+                          <span className="text-[10px] font-mono text-slate-400 font-bold tracking-wider uppercase">Table: IVC_OBJECTS</span>
+                          <span className="text-[9px] bg-slate-800 text-slate-400 px-1.5 py-0.5 rounded font-mono">1 Row</span>
+                        </div>
+                        <div className="overflow-auto flex-1">
+                          <table className="w-full text-left font-mono text-[10px] sm:text-[11px] text-slate-300 whitespace-nowrap">
+                            <thead className="bg-slate-900/50 text-slate-500">
+                              <tr><th className="px-3 py-1.5 font-medium">id (PK)</th><th className="px-3 py-1.5 font-medium">object_type</th><th className="px-3 py-1.5 font-medium">status</th></tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-800/50">
+                              <tr className="hover:bg-slate-900/30">
+                                <td className="px-3 py-1.5 text-blue-300">{db.objectsTableRow.id}</td>
+                                <td className="px-3 py-1.5">{db.objectsTableRow.object_type}</td>
+                                <td className="px-3 py-1.5 text-emerald-400">{db.objectsTableRow.status}</td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+
+                      {/* Props Table */}
+                      <div className="bg-slate-950 border border-slate-800 rounded-lg overflow-hidden flex flex-col h-64">
+                        <div className="bg-slate-900 border-b border-slate-800 px-3 py-2 flex items-center justify-between shrink-0">
+                          <span className="text-[10px] font-mono text-slate-400 font-bold tracking-wider uppercase">Table: IVC_PROPS</span>
+                          <span className="text-[9px] bg-slate-800 text-slate-400 px-1.5 py-0.5 rounded font-mono">{db.propsTableRows.length} Rows</span>
+                        </div>
+                        <div className="overflow-auto flex-1">
+                          <table className="w-full text-left font-mono text-[10px] sm:text-[11px] text-slate-300 whitespace-nowrap">
+                            <thead className="bg-slate-900/50 text-slate-500">
+                              <tr><th className="px-3 py-1.5 font-medium">prop_key</th><th className="px-3 py-1.5 font-medium">prop_val</th><th className="px-3 py-1.5 font-medium">origin</th></tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-800/50">
+                              {db.propsTableRows.map(r => (
+                                <tr key={r.id} className="hover:bg-slate-900/30">
+                                  <td className="px-3 py-1.5 text-indigo-300">{r.prop_key}</td>
+                                  <td className="px-3 py-1.5 truncate max-w-[150px]">{r.prop_val}</td>
+                                  <td className="px-3 py-1.5 text-slate-500">{r.origin}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+
+                      {/* Modes Ledger */}
+                      <div className="bg-slate-950 border border-slate-800 rounded-lg overflow-hidden flex flex-col h-64">
+                        <div className="bg-slate-900 border-b border-slate-800 px-3 py-2 flex items-center justify-between shrink-0">
+                          <span className="text-[10px] font-mono text-slate-400 font-bold tracking-wider uppercase">Table: IVC_MODES_LEDGER</span>
+                          <span className="text-[9px] bg-slate-800 text-slate-400 px-1.5 py-0.5 rounded font-mono">{db.modesTableRows.length} Rows</span>
+                        </div>
+                        <div className="overflow-auto flex-1">
+                          <table className="w-full text-left font-mono text-[10px] sm:text-[11px] text-slate-300 whitespace-nowrap">
+                            <thead className="bg-slate-900/50 text-slate-500">
+                              <tr><th className="px-3 py-1.5 font-medium">mode_char</th><th className="px-3 py-1.5 font-medium">granted_by</th><th className="px-3 py-1.5 font-medium">scope</th></tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-800/50">
+                              {db.modesTableRows.map(r => (
+                                <tr key={r.id} className="hover:bg-slate-900/30">
+                                  <td className="px-3 py-1.5 font-bold text-amber-400">{r.mode_char}</td>
+                                  <td className="px-3 py-1.5 text-slate-400">{r.granted_by}</td>
+                                  <td className="px-3 py-1.5">{r.scope}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+
+                      {/* SubObjects Table */}
+                      <div className="bg-slate-950 border border-slate-800 rounded-lg overflow-hidden flex flex-col h-64">
+                        <div className="bg-slate-900 border-b border-slate-800 px-3 py-2 flex items-center justify-between shrink-0">
+                          <span className="text-[10px] font-mono text-slate-400 font-bold tracking-wider uppercase">Table: IVC_SUB_OBJECTS</span>
+                          <span className="text-[9px] bg-slate-800 text-slate-400 px-1.5 py-0.5 rounded font-mono">{db.subObjectsTableRows.length} Rows</span>
+                        </div>
+                        <div className="overflow-auto flex-1">
+                          <table className="w-full text-left font-mono text-[10px] sm:text-[11px] text-slate-300 whitespace-nowrap">
+                            <thead className="bg-slate-900/50 text-slate-500">
+                              <tr><th className="px-3 py-1.5 font-medium">sub_path</th><th className="px-3 py-1.5 font-medium">sub_type</th><th className="px-3 py-1.5 font-medium">is_ephemeral</th></tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-800/50">
+                              {db.subObjectsTableRows.map(r => (
+                                <tr key={r.id} className="hover:bg-slate-900/30">
+                                  <td className="px-3 py-1.5 text-fuchsia-300">{r.sub_path}</td>
+                                  <td className="px-3 py-1.5">{r.sub_type}</td>
+                                  <td className="px-3 py-1.5">{r.is_ephemeral ? '1' : '0'}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* WIRE TAB */}
+            {activeTab === 'wire' && (() => {
+              const wire = getRawWireRepresentation(baseTarget);
+              return (
+                <div className="space-y-4 font-mono h-full flex flex-col">
+                  <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between bg-[#070b12] p-3 rounded-lg border border-[#30363d]">
+                    <div className="flex items-center space-x-2 text-slate-300 font-bold text-sm uppercase tracking-wider">
+                      <Cpu className="w-4 h-4 text-blue-500" />
+                      <span>Socket Stream Buffer (IRQ 33)</span>
+                    </div>
+                    <div className="flex items-center space-x-3 text-[10px] text-slate-500">
+                      <span className="flex items-center"><Shield className="w-3 h-3 mr-1 text-emerald-500"/> {wire.cipher}</span>
+                      <span className="flex items-center"><Activity className="w-3 h-3 mr-1 text-amber-500"/> {wire.byteLength} BYTES</span>
+                      <span className="font-bold border border-slate-700 px-1.5 py-0.5 rounded">SEQ: {wire.sequenceId}</span>
+                    </div>
+                  </div>
+
+                  <div className="flex-1 bg-[#0d1117] border border-[#30363d] rounded-lg overflow-hidden flex flex-col">
+                    <div className="flex items-center justify-between px-3 py-1.5 bg-[#161b22] border-b border-[#30363d] shrink-0">
+                      <span className="text-[10px] text-slate-500 uppercase font-bold tracking-widest">RAW ASCII / UTF-8</span>
+                      <button onClick={() => copyToClipboard(wire.rawString, 'Copied Wire Frames')} className="text-slate-400 hover:text-slate-200">
+                        <Copy className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                    <div className="p-4 overflow-y-auto flex-1 text-[11px] sm:text-[12px] leading-relaxed select-text space-y-1">
+                      {wire.frameLines.map((line, i) => {
+                        const isCmd = line.startsWith('MODE') || line.startsWith('JOIN') || line.startsWith('§PROP');
+                        const isServer = line.startsWith(':');
+                        return (
+                          <div key={i} className="flex font-mono">
+                            <span className="text-slate-600 mr-4 select-none border-r border-slate-800 pr-2 w-8 text-right shrink-0">{i.toString().padStart(2, '0')}</span>
+                            <span className={`break-all ${isCmd ? 'text-amber-400 font-bold' : isServer ? 'text-slate-300' : 'text-blue-300'}`}>
+                              {line}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <div className="px-3 py-1.5 bg-slate-900 border-t border-slate-800 flex justify-between items-center shrink-0">
+                      <span className="text-[10px] text-slate-500 font-bold">CRC-32: <span className="text-slate-400">{wire.crc32}</span></span>
+                      <span className="text-[10px] text-emerald-500 font-bold animate-pulse flex items-center"><Activity className="w-3 h-3 mr-1"/> SOCKET_ESTABLISHED</span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* DIFF TAB */}
+            {activeTab === 'diff' && (
+              <div className="space-y-4 font-mono h-full flex flex-col">
+                 <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between bg-[#1e1e1e] p-3 rounded-lg border border-slate-800">
+                  <div className="flex items-center space-x-2 text-slate-300 font-bold text-sm uppercase tracking-wider">
+                    <FileDiff className="w-4 h-4 text-orange-500" />
+                    <span>PROTOTYPE ΔDIFF</span>
+                  </div>
+                  <div className="text-xs text-slate-500">
+                    Comparing <span className="text-emerald-400 font-bold ml-1">Current State</span> vs <span className="text-red-400 font-bold ml-1">Prototype Baseline</span>
+                  </div>
+                </div>
+                <div className="flex-1 bg-[#1e1e1e] border border-slate-800 rounded-lg p-4 overflow-y-auto text-xs sm:text-sm">
+                  <div className="text-slate-400 mb-2 italic">// Generated Diff Map for {baseTarget}</div>
+                  <div className="text-red-400">- base_prototype_version: "1.0.0"</div>
+                  <div className="text-emerald-400">+ current_object_version: "2.4.1"</div>
+                  <div className="text-slate-500 py-1">@@ -15,4 +15,7 @@</div>
+                  <div className="text-slate-300">  metadata: {"{"}</div>
+                  <div className="text-red-400">-   active_listeners: 0,</div>
+                  <div className="text-emerald-400">+   active_listeners: 1,</div>
+                  <div className="text-red-400">-   state: "INITIALIZING"</div>
+                  <div className="text-emerald-400">+   state: "READY_ACTIVE",</div>
+                  <div className="text-emerald-400">+   last_modified: "{new Date().toISOString()}"</div>
+                  <div className="text-slate-300">  {"}"}</div>
+                  <div className="text-slate-500 py-1">@@ -28,2 +31,4 @@</div>
+                  <div className="text-slate-300">  active_modes: {"{"}</div>
+                  <div className="text-red-400">-   kernel_mode: false,</div>
+                  <div className="text-emerald-400">+   kernel_mode: {isK ? 'true' : 'false'},</div>
+                  <div className="text-emerald-400">+   trusted_service: {isCapS ? 'true' : 'false'},</div>
+                  <div className="text-slate-300">  {"}"}</div>
+                </div>
+              </div>
+            )}
+
+            {/* PROMPTS TAB */}
+            {activeTab === 'prompts' && isModelTarget && (
+              <div className="space-y-4 font-sans h-full flex flex-col">
+                 <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between bg-purple-950/20 p-3 rounded-lg border border-purple-900/50">
+                  <div className="flex items-center space-x-2 text-purple-400 font-mono text-sm">
+                    <MessageSquare className="w-4 h-4" />
+                    <span className="font-bold">SYSTEM PROMPTS & INSTRUCTIONS</span>
+                  </div>
+                </div>
+                <div className="flex-1 bg-slate-900 border border-slate-800 rounded-lg p-4 overflow-y-auto">
+                  <div className="space-y-4">
+                    <div className="bg-slate-950 border border-slate-800 rounded-lg p-3">
+                      <div className="text-xs font-bold text-slate-500 uppercase mb-2 font-mono">Core System Prompt</div>
+                      <pre className="text-sm text-slate-300 whitespace-pre-wrap font-sans">You are a helpful, harmless, and honest AI assistant. You operate within the IVC protocol framework.</pre>
+                    </div>
+                    <div className="bg-slate-950 border border-slate-800 rounded-lg p-3">
+                      <div className="text-xs font-bold text-slate-500 uppercase mb-2 font-mono">Safety Policy (Override)</div>
+                      <pre className="text-sm text-slate-300 whitespace-pre-wrap font-sans">BLOCK_HATE_SPEECH=HIGH
+BLOCK_DANGEROUS_CONTENT=HIGH
+BLOCK_HARASSMENT=HIGH
+BLOCK_SEXUALLY_EXPLICIT=HIGH</pre>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* MODEL STATE TAB */}
+            {activeTab === 'model' && isModelTarget && (
+              <div className="space-y-4 font-sans h-full flex flex-col">
+                 <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between bg-blue-950/20 p-3 rounded-lg border border-blue-900/50">
+                  <div className="flex items-center space-x-2 text-blue-400 font-mono text-sm">
+                    <Cpu className="w-4 h-4" />
+                    <span className="font-bold">MODEL STATE & HYPERPARAMETERS</span>
+                  </div>
+                </div>
+                <div className="flex-1 bg-slate-900 border border-slate-800 rounded-lg p-4 overflow-y-auto">
+                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                     <div className="bg-slate-950 border border-slate-800 rounded-lg p-3 font-mono text-sm">
+                        <div className="text-slate-500 mb-2">Temperature</div>
+                        <div className="text-emerald-400">0.7</div>
+                     </div>
+                     <div className="bg-slate-950 border border-slate-800 rounded-lg p-3 font-mono text-sm">
+                        <div className="text-slate-500 mb-2">Top P</div>
+                        <div className="text-emerald-400">0.95</div>
+                     </div>
+                     <div className="bg-slate-950 border border-slate-800 rounded-lg p-3 font-mono text-sm">
+                        <div className="text-slate-500 mb-2">Top K</div>
+                        <div className="text-emerald-400">40</div>
+                     </div>
+                     <div className="bg-slate-950 border border-slate-800 rounded-lg p-3 font-mono text-sm">
+                        <div className="text-slate-500 mb-2">Max Output Tokens</div>
+                        <div className="text-emerald-400">8192</div>
+                     </div>
+                   </div>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       );
     }
