@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Home, Search, Bell, Menu, User, MessageSquare, Heart, Share2, MoreHorizontal, GitCommit, Code, Terminal, Send, Hash, ChevronRight, Folder, Bookmark, EyeOff, Ban, Server, Activity, PlaySquare, Sparkles, Settings, Database, ShieldCheck, ShieldAlert, Cpu, Coins, Layers, Zap, Workflow, Binary, GitFork, Gauge, Radio, Volume2, Mic, CheckCircle2, Sliders, SlidersHorizontal, RotateCcw, Check, Copy, Plus, Minus, ArrowRight, Shield, Info, History, Clock, UserCheck, Filter } from 'lucide-react';
+import { Home, Search, Bell, Menu, User, MessageSquare, Heart, Share2, MoreHorizontal, GitCommit, Code, Terminal, Send, Hash, ChevronRight, Folder, Bookmark, EyeOff, Ban, Server, Activity, PlaySquare, Sparkles, Settings, Database, ShieldCheck, ShieldAlert, Cpu, Coins, Layers, Zap, Workflow, Binary, GitFork, Gauge, Radio, Volume2, Mic, CheckCircle2, Sliders, SlidersHorizontal, RotateCcw, Check, Copy, Plus, Minus, ArrowRight, Shield, Info, History, Clock, UserCheck, Filter, Users, Lock, RefreshCw, Trash2, Globe, Key, Pin, Edit3, ExternalLink, FileText, GitCompare, Table, FileCode, Braces, Split, Network, CornerDownRight } from 'lucide-react';
 
 interface PrefixDescriptor {
   prefix: string;
@@ -33,6 +33,215 @@ export interface ModeHistoryEntry {
   timestamp: string;
   scope: string;
 }
+
+export interface ObjectProp {
+  id: string;
+  key: string;
+  type: 'string' | 'number' | 'boolean' | 'json' | 'enum' | 'timestamp';
+  value: any;
+  origin: 'PROTOTYPE' | 'INHERITED' | 'OVERRIDDEN' | 'DYNAMIC_DELTA';
+  isReadOnly?: boolean;
+  description: string;
+  schemaRule?: string;
+  updatedAt: string;
+}
+
+export interface GeneratedSubObject {
+  path: string;
+  name: string;
+  type: 'channel' | 'sub_channel' | 'query_facet' | 'props' | 'db' | 'wire' | 'server' | 'stream' | 'storage';
+  description: string;
+  inheritedModes: string;
+  isEphemeral?: boolean;
+  activeListeners?: number;
+}
+
+export interface DatabaseRecord {
+  table: string;
+  primaryKey: string;
+  columns: Record<string, any>;
+  foreignKeys?: { column: string; referencesTable: string; referencesKey: string }[];
+}
+
+export interface PersonalChannelPost {
+  id: string;
+  author: string;
+  handle: string;
+  time: string;
+  content: string;
+  isPinned?: boolean;
+  role?: 'user' | 'model' | 'system';
+  likes?: number;
+}
+
+export const DEFAULT_PERSONAL_CHANNELS: Record<string, PersonalChannelPost[]> = {
+  '@jakedot/#notes': [
+    {
+      id: 'p-1',
+      author: 'Jake Dot',
+      handle: '@jakedot',
+      time: '10m ago',
+      content: '📌 [PINNED] Welcome to @jakedot/#notes personal workspace.\nChannel ID: <prefix><object>/#channel (@jakedot/#notes).\nModes active: +p+m+n+t+s. Owner: @jakedot (founder/op).',
+      isPinned: true,
+      role: 'user',
+      likes: 5
+    },
+    {
+      id: 'p-2',
+      author: 'Jake Dot',
+      handle: '@jakedot',
+      time: '5m ago',
+      content: 'IVC Protocol Task Checklist:\n1. Personal channel ID addressing format <prefix><object>/#channel implemented.\n2. Cascading mode inheritance & founder ACLs verified.\n3. Model-backed personal channels ($duck.ai/#evals) connected.',
+      isPinned: false,
+      role: 'user',
+      likes: 3
+    }
+  ],
+  '@jakedot/#dev': [
+    {
+      id: 'p-dev-1',
+      author: 'Jake Dot',
+      handle: '@jakedot',
+      time: '15m ago',
+      content: 'Development Scratchpad:\n- Port: 3000 (Vite HMR/Reverse Proxy mode)\n- Routing Protocol: ivc://host/<prefix><object>/#channel\n- Fast state synchronization across localStorage enabled.',
+      isPinned: true,
+      role: 'user',
+      likes: 2
+    }
+  ],
+  '$duck.ai/#evals': [
+    {
+      id: 'p-duck-1',
+      author: 'duck.ai',
+      handle: '$duck.ai',
+      time: '1h ago',
+      content: '📌 [SYSTEM BENCHMARK] Autonomous evaluation suite initialized on $duck.ai/#evals.\nModel Accuracy: 99.8% | Context Window: 1M tokens | Status: +S TRUSTED_MODEL_OBJECT',
+      isPinned: true,
+      role: 'model',
+      likes: 12
+    },
+    {
+      id: 'p-duck-2',
+      author: 'duck.ai',
+      handle: '$duck.ai',
+      time: '20m ago',
+      content: 'Personal channel isolation test completed. Send any prompt or evaluation query to execute scoped inference.',
+      role: 'model',
+      likes: 4
+    }
+  ],
+  '$gemini-3.7-flash/#prompts': [
+    {
+      id: 'p-gem-1',
+      author: 'gemini-3.7-flash',
+      handle: '$gemini-3.7-flash',
+      time: '30m ago',
+      content: 'Prompt Template Repository:\nActive system prompt loaded with multi-turn grounding and IVC route interpretation.',
+      isPinned: true,
+      role: 'model',
+      likes: 8
+    }
+  ],
+  '~root/#kernel-log': [
+    {
+      id: 'p-root-1',
+      author: 'Root Supervisor',
+      handle: '~root',
+      time: '2h ago',
+      content: '[KERNEL SUPERVISOR] Ring buffer initialized. /dev/ivc_bus0 mapped at 0x00FF3400. All personal channel namespace boundaries validated under RFC 1459 / IVC v2.',
+      isPinned: true,
+      role: 'system',
+      likes: 7
+    }
+  ],
+  '&services/#audit': [
+    {
+      id: 'p-srv-1',
+      author: 'Network Services',
+      handle: '&services',
+      time: '45m ago',
+      content: '[DAEMON LEDGER] NickServ & ChanServ daemon certificates renewed. TLS 1.3 active with zero dropped sessions across personal channels.',
+      isPinned: true,
+      role: 'system',
+      likes: 9
+    }
+  ],
+  '@user[123]/#cluster-log': [
+    {
+      id: 'p-u123-1',
+      author: 'Client Cluster Node',
+      handle: '@user[123]',
+      time: '1h ago',
+      content: 'Cluster node 123 telemetry report: Memory 42%, CPU load 0.18. Zero anomalous packet drops.',
+      isPinned: false,
+      role: 'user',
+      likes: 1
+    }
+  ]
+};
+
+export const DEFAULT_PERSONAL_TOPICS: Record<string, string> = {
+  '@jakedot/#notes': 'Personal Developer Notes, Architecture Specs & Scratchpad',
+  '@jakedot/#dev': 'Active development stream & compiler output logs',
+  '@jakedot/#general': 'General personal discussions and owner bulletins',
+  '$duck.ai/#evals': 'Autonomous benchmark evaluations and model accuracy telemetry',
+  '$duck.ai/#prompts': 'Prompt experiments and model reasoning tests',
+  '$gemini-3.7-flash/#prompts': 'Prompt template engineering and system instructions repository',
+  '~root/#kernel-log': 'Ring buffer supervisor messages and hardware interrupt trace',
+  '&services/#audit': 'Network services audit ledger and security certificate monitor',
+  '@user[123]/#cluster-log': 'Client cluster telemetry, health diagnostics and ping reports'
+};
+
+export const DEFAULT_OBJECT_PROPS: Record<string, ObjectProp[]> = {
+  '@jakedot': [
+    { id: 'pr-j1', key: 'identity.handle', type: 'string', value: '@jakedot', origin: 'PROTOTYPE', isReadOnly: true, description: 'Canonical user handle', schemaRule: 'pattern: ^@[a-z0-9_]+$', updatedAt: '12:00:00' },
+    { id: 'pr-j2', key: 'identity.role', type: 'string', value: 'Operator / Root Founder', origin: 'PROTOTYPE', description: 'Network authority designation', schemaRule: 'enum: [Operator, Admin, User]', updatedAt: '12:00:00' },
+    { id: 'pr-j3', key: 'acl.mode_mask', type: 'string', value: '+ao-s+v', origin: 'OVERRIDDEN', description: 'Effective permission flags bitmask', schemaRule: 'irc_mode_string', updatedAt: '12:42:15' },
+    { id: 'pr-j4', key: 'session.ring', type: 'number', value: 0, origin: 'PROTOTYPE', description: 'Hardware execution privilege ring (0=Ring0 kernel)', schemaRule: 'range: 0..3', updatedAt: '11:15:00' },
+    { id: 'pr-j5', key: 'network.vhost', type: 'string', value: 'staff.operator.ivc.net', origin: 'INHERITED', description: 'Cloaked hostmask presentation', schemaRule: 'fqdn', updatedAt: '10:00:00' },
+    { id: 'pr-j6', key: 'quota.monthly_queries', type: 'number', value: 1000000, origin: 'DYNAMIC_DELTA', description: 'Remaining monthly query quota tokens', schemaRule: 'min: 0', updatedAt: '12:50:11' },
+    { id: 'pr-j7', key: 'telemetry.trace_enabled', type: 'boolean', value: true, origin: 'PROTOTYPE', description: 'Real-time event trace emitter state (+t)', schemaRule: 'boolean', updatedAt: '12:34:01' }
+  ],
+  '$duck.ai': [
+    { id: 'pr-d1', key: 'model.engine', type: 'string', value: 'duck-neural-v4-turbo', origin: 'PROTOTYPE', isReadOnly: true, description: 'Inference foundation model architecture', schemaRule: 'model_id', updatedAt: '11:00:00' },
+    { id: 'pr-d2', key: 'model.context_tokens', type: 'number', value: 1048576, origin: 'PROTOTYPE', description: 'Maximum active context window capacity', schemaRule: 'power_of_two', updatedAt: '11:00:00' },
+    { id: 'pr-d3', key: 'model.temperature', type: 'number', value: 0.7, origin: 'OVERRIDDEN', description: 'Sampling entropy temperature for generation', schemaRule: 'range: 0.0..2.0', updatedAt: '12:10:00' },
+    { id: 'pr-d4', key: 'model.trust_tier', type: 'string', value: '+S (Trusted Object)', origin: 'INHERITED', description: 'System trust validation status', schemaRule: 'enum: [+S, +s, -S]', updatedAt: '10:30:00' },
+    { id: 'pr-d5', key: 'model.grounding_active', type: 'boolean', value: true, origin: 'DYNAMIC_DELTA', description: 'Live Google search and web grounding integration', schemaRule: 'boolean', updatedAt: '12:30:00' },
+    { id: 'pr-d6', key: 'model.latency_target_ms', type: 'number', value: 120, origin: 'PROTOTYPE', description: 'Target token streaming response latency', schemaRule: 'ms', updatedAt: '11:00:00' }
+  ],
+  '$gemini-3.7-flash': [
+    { id: 'pr-g1', key: 'model.id', type: 'string', value: 'models/gemini-3.7-flash', origin: 'PROTOTYPE', isReadOnly: true, description: 'Google GenAI model identifier', schemaRule: 'sdk_model_id', updatedAt: '10:00:00' },
+    { id: 'pr-g2', key: 'model.temperature', type: 'number', value: 0.4, origin: 'OVERRIDDEN', description: 'Default system response entropy', schemaRule: 'range: 0.0..1.0', updatedAt: '11:00:00' },
+    { id: 'pr-g3', key: 'model.reasoning_budget', type: 'number', value: 8192, origin: 'PROTOTYPE', description: 'Dynamic thinking token allocation ceiling', schemaRule: 'tokens', updatedAt: '10:00:00' },
+    { id: 'pr-g4', key: 'model.api_status', type: 'enum', value: 'READY_STREAMING', origin: 'DYNAMIC_DELTA', description: 'Live backend endpoint status', schemaRule: 'enum: [READY, BUSY, OFFLINE]', updatedAt: '13:00:00' }
+  ],
+  '&services': [
+    { id: 'pr-s1', key: 'daemons.total', type: 'number', value: 6, origin: 'PROTOTYPE', isReadOnly: true, description: 'Count of active network service daemons', schemaRule: 'count', updatedAt: '10:00:00' },
+    { id: 'pr-s2', key: 'security.tls_version', type: 'string', value: 'TLSv1.3', origin: 'PROTOTYPE', isReadOnly: true, description: 'Inter-daemon encryption standard', schemaRule: 'tls_proto', updatedAt: '10:00:00' },
+    { id: 'pr-s3', key: 'network.sync_interval_ms', type: 'number', value: 500, origin: 'OVERRIDDEN', description: 'State synchronization interval between nodes', schemaRule: 'min: 100', updatedAt: '11:30:00' },
+    { id: 'pr-s4', key: 'daemons.nickserv', type: 'enum', value: 'ONLINE', origin: 'DYNAMIC_DELTA', description: 'NickServ authentication status', schemaRule: 'enum: [ONLINE, DEGRADED, OFFLINE]', updatedAt: '12:45:00' },
+    { id: 'pr-s5', key: 'daemons.chanserv', type: 'enum', value: 'ONLINE', origin: 'DYNAMIC_DELTA', description: 'ChanServ channel guard status', schemaRule: 'enum: [ONLINE, DEGRADED, OFFLINE]', updatedAt: '12:45:00' }
+  ],
+  '~root': [
+    { id: 'pr-r1', key: 'kernel.ring', type: 'number', value: 0, origin: 'PROTOTYPE', isReadOnly: true, description: 'Processor Ring-0 execution level', schemaRule: '0', updatedAt: '09:00:00' },
+    { id: 'pr-r2', key: 'kernel.arch', type: 'string', value: 'x86_64-ivc', origin: 'PROTOTYPE', isReadOnly: true, description: 'Virtual kernel micro-architecture', schemaRule: 'arch', updatedAt: '09:00:00' },
+    { id: 'pr-r3', key: 'security.kprobe_active', type: 'boolean', value: true, origin: 'PROTOTYPE', description: 'Kernel trace probe active', schemaRule: 'boolean', updatedAt: '11:15:00' },
+    { id: 'pr-r4', key: 'syscall.trap_mask', type: 'string', value: '0x000001ff', origin: 'INHERITED', description: 'Intercepted syscall bitmask', schemaRule: 'hex32', updatedAt: '11:15:00' }
+  ],
+  '#feed': [
+    { id: 'pr-f1', key: 'channel.topic', type: 'string', value: 'Global public feed stream and network status announcements', origin: 'PROTOTYPE', description: 'Channel topic description', schemaRule: 'text', updatedAt: '10:00:00' },
+    { id: 'pr-f2', key: 'channel.max_members', type: 'number', value: 50000, origin: 'PROTOTYPE', description: 'Channel occupant ceiling (+l)', schemaRule: 'min: 1', updatedAt: '10:00:00' },
+    { id: 'pr-f3', key: 'channel.moderated', type: 'boolean', value: false, origin: 'DYNAMIC_DELTA', description: 'Voice requirement mode (+m)', schemaRule: 'boolean', updatedAt: '12:40:00' },
+    { id: 'pr-f4', key: 'channel.broadcast_rate', type: 'string', value: 'UNRESTRICTED', origin: 'PROTOTYPE', description: 'Rate limit ceiling per second', schemaRule: 'enum: [UNRESTRICTED, THROTTLED, BURST]', updatedAt: '10:00:00' }
+  ],
+  '§config': [
+    { id: 'pr-c1', key: 'schema.version', type: 'string', value: '2026.08.19-rev4', origin: 'PROTOTYPE', isReadOnly: true, description: 'Master schema revision number', schemaRule: 'semver', updatedAt: '12:00:00' },
+    { id: 'pr-c2', key: 'validation.mode', type: 'string', value: 'STRICT_SEMANTIC', origin: 'PROTOTYPE', description: 'Schema validator strictness level', schemaRule: 'enum: [STRICT_SEMANTIC, PERMISSIVE, DYNAMIC]', updatedAt: '12:00:00' },
+    { id: 'pr-c3', key: 'persistence.provider', type: 'string', value: 'LOCAL_STORAGE_AND_SQLITE_BUS', origin: 'PROTOTYPE', description: 'Active data persistence backend', schemaRule: 'provider_id', updatedAt: '12:00:00' },
+    { id: 'pr-c4', key: 'ivc.protocol_revision', type: 'string', value: 'IVC/2.4', origin: 'PROTOTYPE', isReadOnly: true, description: 'Wire protocol specification version', schemaRule: 'proto_ver', updatedAt: '12:00:00' }
+  ]
+};
 
 const PREFIX_REGISTRY: Record<string, PrefixDescriptor> = {
   '§': {
@@ -242,13 +451,52 @@ export default function App() {
     try { return JSON.parse(localStorage.getItem('lite_negatedModes') || '{}'); } catch { return {}; }
   });
 
-  // Model Chat States
+  // Model Chat States (Tri-faceted: Server channels, Channel amalgamation, Private Anonymous PRIVMSG)
   const [modelChats, setModelChats] = useState<Record<string, {role: string, text: string}[]>>(() => {
     try { return JSON.parse(localStorage.getItem('lite_modelChats') || '{}'); } catch { return {}; }
   });
+  const [serverChats, setServerChats] = useState<Record<string, {role: string, text: string}[]>>(() => {
+    try { return JSON.parse(localStorage.getItem('lite_serverChats') || '{}'); } catch { return {}; }
+  });
+  const [roomChats, setRoomChats] = useState<Record<string, {role: string, text: string}[]>>(() => {
+    try { return JSON.parse(localStorage.getItem('lite_roomChats') || '{}'); } catch { return {}; }
+  });
+  const [privmsgChats, setPrivmsgChats] = useState<Record<string, {role: string, text: string}[]>>(() => {
+    try { return JSON.parse(localStorage.getItem('lite_privmsgChats') || '{}'); } catch { return {}; }
+  });
+  const [activeServerChannel, setActiveServerChannel] = useState<Record<string, string>>(() => {
+    try { return JSON.parse(localStorage.getItem('lite_activeServerChannel') || '{}'); } catch { return {}; }
+  });
+  const [anonymousSessionId, setAnonymousSessionId] = useState<string>(() => {
+    return 'anon_sess_' + Math.random().toString(36).substring(2, 7);
+  });
+  const [manualFacet, setManualFacet] = useState<Record<string, 'server' | 'channel' | 'privmsg'>>({});
   const [modelChatInput, setModelChatInput] = useState('');
   const [modelLoading, setModelLoading] = useState<Record<string, boolean>>({});
   const chatEndRef = useRef<HTMLDivElement>(null);
+
+  // Personal Channel States (<prefix><object>/#channel)
+  const [personalChannels, setPersonalChannels] = useState<Record<string, PersonalChannelPost[]>>(() => {
+    try {
+      const stored = localStorage.getItem('lite_personal_channels');
+      return stored ? { ...DEFAULT_PERSONAL_CHANNELS, ...JSON.parse(stored) } : DEFAULT_PERSONAL_CHANNELS;
+    } catch {
+      return DEFAULT_PERSONAL_CHANNELS;
+    }
+  });
+  const [personalTopics, setPersonalTopics] = useState<Record<string, string>>(() => {
+    try {
+      const stored = localStorage.getItem('lite_personal_topics');
+      return stored ? { ...DEFAULT_PERSONAL_TOPICS, ...JSON.parse(stored) } : DEFAULT_PERSONAL_TOPICS;
+    } catch {
+      return DEFAULT_PERSONAL_TOPICS;
+    }
+  });
+  const [personalInput, setPersonalInput] = useState('');
+  const [editingPersonalTopic, setEditingPersonalTopic] = useState(false);
+  const [topicDraft, setTopicDraft] = useState('');
+  const [newChannelInput, setNewChannelInput] = useState('');
+  const [showNewChannelInput, setShowNewChannelInput] = useState(false);
 
   // Kernel-Mode (+k) Diagnostic State
   const [kernelTab, setKernelTab] = useState<'dmesg' | 'memory' | 'registers' | 'traps' | 'trace'>('dmesg');
@@ -327,6 +575,30 @@ export default function App() {
       scope: 'Channel Local Scope'
     }
   ]);
+
+  // §props and Δview Matrix States
+  const [objectPropsStore, setObjectPropsStore] = useState<Record<string, ObjectProp[]>>(() => {
+    try {
+      const stored = localStorage.getItem('lite_object_props');
+      return stored ? { ...DEFAULT_OBJECT_PROPS, ...JSON.parse(stored) } : DEFAULT_OBJECT_PROPS;
+    } catch {
+      return DEFAULT_OBJECT_PROPS;
+    }
+  });
+  const [deltaViewTab, setDeltaViewTab] = useState<'json' | 'diff' | 'props' | 'db' | 'subobjects' | 'wire'>('json');
+  const [propsSearchFilter, setPropsSearchFilter] = useState('');
+  const [editingPropId, setEditingPropId] = useState<string | null>(null);
+  const [editingPropVal, setEditingPropVal] = useState<string>('');
+  const [newPropKey, setNewPropKey] = useState('');
+  const [newPropVal, setNewPropVal] = useState('');
+  const [newPropType, setNewPropType] = useState<'string' | 'number' | 'boolean' | 'json' | 'enum'>('string');
+  const [showAddPropModal, setShowAddPropModal] = useState(false);
+  const [dbSqlQuery, setDbSqlQuery] = useState<string>('');
+  const [dbQueryCustomOutput, setDbQueryCustomOutput] = useState<{ columns: string[]; rows: any[][] } | null>(null);
+  const [subObjectSearchFilter, setSubObjectSearchFilter] = useState('');
+  const [jsonSearchFilter, setJsonSearchFilter] = useState('');
+  const [copiedNotification, setCopiedNotification] = useState<string | null>(null);
+  const [querySubChannelFilter, setQuerySubChannelFilter] = useState('');
 
   const logModeChange = (target: string, delta: string, desc: string, user: string = '@jakedot') => {
     const newEntry: ModeHistoryEntry = {
@@ -410,8 +682,15 @@ export default function App() {
     localStorage.setItem('lite_ignored', JSON.stringify(ignored));
     localStorage.setItem('lite_banned', JSON.stringify(banned));
     localStorage.setItem('lite_modelChats', JSON.stringify(modelChats));
+    localStorage.setItem('lite_serverChats', JSON.stringify(serverChats));
+    localStorage.setItem('lite_roomChats', JSON.stringify(roomChats));
+    localStorage.setItem('lite_privmsgChats', JSON.stringify(privmsgChats));
+    localStorage.setItem('lite_activeServerChannel', JSON.stringify(activeServerChannel));
     localStorage.setItem('lite_negatedModes', JSON.stringify(negatedModes));
-  }, [bookmarks, likes, ignored, banned, modelChats, negatedModes]);
+    localStorage.setItem('lite_personal_channels', JSON.stringify(personalChannels));
+    localStorage.setItem('lite_personal_topics', JSON.stringify(personalTopics));
+    localStorage.setItem('lite_object_props', JSON.stringify(objectPropsStore));
+  }, [bookmarks, likes, ignored, banned, modelChats, serverChats, roomChats, privmsgChats, activeServerChannel, negatedModes, personalChannels, personalTopics, objectPropsStore]);
 
   // Parse addressing structure (e.g. @user+pm, #group/subgroup/channel+raw, ivc://host/#feed/&config, §config, ?probe, etc.)
   let rawAddress = address;
@@ -472,7 +751,14 @@ export default function App() {
     modifiers.includes(fullWord) || 
     modifiers.some(m => m.length <= 4 && m.includes(char));
 
-  const isRaw = modifiers.includes('raw');
+  const isRaw = modifiers.includes('raw') || modifiers.includes('Δview') || modifiers.includes('deltaview') || modifiers.includes('rawmode') || baseTarget.endsWith('/Δview') || baseTarget.endsWith('/raw');
+  const isProps = modifiers.includes('§props') || modifiers.includes('props') || baseTarget.endsWith('/§props') || baseTarget.endsWith('/props') || propertyTarget !== null || baseTarget === '§props';
+  const isDb = modifiers.includes('db') || modifiers.includes('database') || baseTarget.endsWith('/db') || baseTarget === 'db';
+  const isDiff = modifiers.includes('diff') || modifiers.includes('Δdiff') || baseTarget.endsWith('/diff') || baseTarget === 'diff';
+  const isSubObjects = modifiers.includes('subobjects') || modifiers.includes('sub-objects') || baseTarget.endsWith('/subobjects') || baseTarget.endsWith('/sub-objects');
+  const isWire = modifiers.includes('wire') || modifiers.includes('socket') || modifiers.includes('raw-wire') || baseTarget.endsWith('/wire');
+  const isDeltaView = isRaw || isProps || isDb || isDiff || isSubObjects || isWire;
+
   const isPm = modifiers.includes('pm');
   const isBookmarks = modifiers.includes('bookmarks');
   const isLike = modifiers.includes('like') || modifiers.includes('likes');
@@ -485,8 +771,40 @@ export default function App() {
   const isL = modifiers.includes('l') || modifiers.includes('listen') || modifiers.includes('live');
   const isDeltaModes = modifiers.includes('Δmodes') || modifiers.includes('deltamodes') || modifiers.includes('delta-modes') || modifiers.includes('modes') || modifiers.includes('Δ') || modifiers.includes('delta') || baseTarget === 'Δmodes' || baseTarget === '#Δmodes' || baseTarget === 'modes';
   
+  // Query-Driven Sub-Channels: <target>/?#sub-channel or <target>/?filter=active
+  const isQuerySubChannel = baseTarget.includes('/?#') || (baseTarget.includes('/?') && !baseTarget.includes('/?#'));
+  let queryParentTarget = baseTarget;
+  let querySubChannelSlug = '';
+  let queryPredicateParam = '';
+  if (baseTarget.includes('/?#')) {
+    const qParts = baseTarget.split('/?#');
+    queryParentTarget = qParts[0];
+    querySubChannelSlug = qParts[1] || '';
+  } else if (baseTarget.includes('/?')) {
+    const qParts = baseTarget.split('/?');
+    queryParentTarget = qParts[0];
+    queryPredicateParam = qParts[1] || '';
+  }
+
+  // Personal Channel Concept: <prefix><object>/#channel
+  const isPersonalChannel = baseTarget.includes('/#') && !isQuerySubChannel;
+  const personalChannelParts = isPersonalChannel ? baseTarget.split('/#') : ['', ''];
+  const personalOwner = personalChannelParts[0];
+  const personalChannelName = '#' + (personalChannelParts[1] || '');
+  const personalChannelSlug = personalChannelParts[1] || '';
+
   // Object hierarchy logic (~ for Netadmin only, $ for Oper, | for Admin, & for Network Services)
-  const isModel = baseTarget.startsWith('$') && !baseTarget.startsWith('$@') && !baseTarget.startsWith('$#');
+  const isModel = baseTarget.startsWith('$') && !baseTarget.startsWith('$@') && !baseTarget.startsWith('$#') && !isPersonalChannel;
+  const isModelServerMod = modifiers.includes('server') || modifiers.includes('connect') || modifiers.includes('srv') || modifiers.includes('channels') || baseTarget.includes('/server');
+  const isModelJoinMod = modifiers.includes('join') || modifiers.includes('channel') || modifiers.includes('room');
+  const isModelPrivmsgMod = modifiers.includes('privmsg') || modifiers.includes('msg') || modifiers.includes('pm') || modifiers.includes('query') || modifiers.includes('anon');
+  
+  const currentModelFacet: 'server' | 'channel' | 'privmsg' = 
+    isModelServerMod ? 'server' :
+    isModelJoinMod ? 'channel' :
+    isModelPrivmsgMod ? 'privmsg' :
+    (manualFacet[baseTarget] || 'server');
+
   const isServices = modifiers.includes('N') || modifiers.includes('services') || modifiers.includes('network') || modifiers.includes('netservices') || baseTarget.startsWith('&');
   
   const targetNegated = negatedModes[baseTarget] || [];
@@ -534,17 +852,68 @@ export default function App() {
     if (baseTarget.startsWith('$') && chatEndRef.current) {
       chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
-  }, [modelChats, baseTarget]);
+  }, [modelChats, serverChats, roomChats, privmsgChats, baseTarget]);
 
   const handleCommandSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (commandInput.trim().startsWith('/join ')) {
-      const target = commandInput.trim().slice(6);
-      setAddress(target);
-    } else if (commandInput.trim() === '/mode' || commandInput.trim() === '/modes' || commandInput.trim() === '/delta' || commandInput.trim() === '/Δmodes') {
+    const trimmed = commandInput.trim();
+    if (!trimmed) return;
+
+    if (trimmed.startsWith('/connect ') || trimmed.startsWith('/server ')) {
+      const target = trimmed.startsWith('/connect ') ? trimmed.slice(9).trim() : trimmed.slice(8).trim();
+      if (target.startsWith('$')) {
+        setManualFacet(prev => ({ ...prev, [target]: 'server' }));
+        setAddress(`${target}+server`);
+        logModeChange(target, '+N+S', `Connected to ${target} as pseudo-server offering chat-level access as #channels`, '@jakedot');
+      } else {
+        setAddress(target);
+      }
+    } else if (trimmed.startsWith('/join ')) {
+      const target = trimmed.slice(6).trim();
+      if (target.startsWith('$')) {
+        setManualFacet(prev => ({ ...prev, [target]: 'channel' }));
+        setAddress(`${target}+join`);
+        logModeChange(target, '+mntS', `Joined ${target} as pseudo-channel & user amalgamation`, '@jakedot');
+      } else {
+        setAddress(target);
+      }
+    } else if (trimmed.startsWith('/msg ') || trimmed.startsWith('/privmsg ')) {
+      const isPriv = trimmed.startsWith('/privmsg ');
+      const rest = isPriv ? trimmed.slice(9).trim() : trimmed.slice(5).trim();
+      const firstSpace = rest.indexOf(' ');
+      let target = '';
+      let msg = '';
+      if (firstSpace === -1) {
+        target = rest;
+      } else {
+        target = rest.slice(0, firstSpace).trim();
+        msg = rest.slice(firstSpace + 1).trim();
+      }
+
+      if (target) {
+        if (target.startsWith('$')) {
+          setManualFacet(prev => ({ ...prev, [target]: 'privmsg' }));
+          setAddress(`${target}+privmsg`);
+          if (msg) {
+            triggerModelChat(target, msg, 'privmsg');
+          }
+          logModeChange(target, '+S', `Initiated anonymous PRIVMSG session with ${target}`, '@jakedot');
+        } else {
+          setAddress(`${target}+pm`);
+        }
+      }
+    } else if (trimmed.startsWith('/query ')) {
+      const target = trimmed.slice(7).trim();
+      if (target.startsWith('$')) {
+        setManualFacet(prev => ({ ...prev, [target]: 'privmsg' }));
+        setAddress(`${target}+privmsg`);
+      } else {
+        setAddress(`${target}+pm`);
+      }
+    } else if (trimmed === '/mode' || trimmed === '/modes' || trimmed === '/delta' || trimmed === '/Δmodes') {
       setAddress(`${baseTarget}+Δmodes`);
-    } else if (commandInput.trim().startsWith('/mode ')) {
-      const rawCmd = commandInput.trim().slice(6).trim();
+    } else if (trimmed.startsWith('/mode ')) {
+      const rawCmd = trimmed.slice(6).trim();
       const parts = rawCmd.split(/\s+/);
       
       let target = '';
@@ -603,15 +972,40 @@ export default function App() {
         
         logModeChange(target, modeChanges, `Executed terminal command: /mode ${target} ${modeChanges}`, '@jakedot');
       }
+    } else if (trimmed.startsWith('/topic ') || trimmed === '/topic') {
+      if (trimmed !== '/topic') {
+        const newTopic = trimmed.slice(7).trim();
+        setPersonalTopics(prev => ({ ...prev, [baseTarget]: newTopic }));
+        logModeChange(baseTarget, '+t', `Updated channel topic: "${newTopic}"`, '@jakedot');
+      }
+    } else if (trimmed === '/part' || trimmed.startsWith('/part ')) {
+      setAddress('#feed');
+    } else if (trimmed === '/raw' || trimmed === '/view' || trimmed === '/Δview') {
+      setAddress(`${baseTarget}+Δview`);
+    } else if (trimmed === '/props' || trimmed === '/§props') {
+      setAddress(`${baseTarget}+props`);
+      setDeltaViewTab('props');
+    } else if (trimmed === '/db' || trimmed === '/sql') {
+      setAddress(`${baseTarget}+db`);
+      setDeltaViewTab('db');
+    } else if (trimmed === '/diff' || trimmed === '/Δdiff') {
+      setAddress(`${baseTarget}+diff`);
+      setDeltaViewTab('diff');
+    } else if (trimmed === '/subobjects' || trimmed === '/subs') {
+      setAddress(`${baseTarget}+subobjects`);
+      setDeltaViewTab('subobjects');
+    } else if (trimmed === '/wire') {
+      setAddress(`${baseTarget}+wire`);
+      setDeltaViewTab('wire');
     }
     setCommandInput('');
   };
 
   const toggleRawMode = () => {
-    if (isRaw) {
-      setAddress(address.replace('+raw', ''));
+    if (isDeltaView) {
+      setAddress(address.replace('+raw', '').replace('+Δview', '').replace('+props', '').replace('+db', '').replace('+diff', '').replace('+subobjects', '').replace('+wire', ''));
     } else {
-      setAddress(address + '+raw');
+      setAddress(address + '+Δview');
     }
   };
 
@@ -672,13 +1066,14 @@ export default function App() {
     }, 600);
   };
 
-  const handleModelSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const currentTarget = baseTarget;
-    if (!modelChatInput.trim() || modelLoading[currentTarget]) return;
+  const triggerModelChat = async (
+    currentTarget: string,
+    userMsg: string,
+    facet: 'server' | 'channel' | 'privmsg',
+    channelName: string = '#general'
+  ) => {
+    if (!userMsg.trim() || modelLoading[currentTarget]) return;
     
-    const userMsg = modelChatInput;
-    setModelChatInput('');
     setModelLoading(prev => ({ ...prev, [currentTarget]: true }));
 
     // Temporarily add +l modifier to current address
@@ -689,8 +1084,27 @@ export default function App() {
       return prev;
     });
 
-    const modelName = currentTarget.substring(1); // strip '$'
+    const modelName = currentTarget.startsWith('$') ? currentTarget.substring(1) : currentTarget;
+    const serverChanKey = `${currentTarget}:${channelName}`;
     
+    if (facet === 'server') {
+      setServerChats(prev => {
+        const currentHistory = prev[serverChanKey] || [];
+        return { ...prev, [serverChanKey]: [...currentHistory, { role: 'user', text: userMsg }] };
+      });
+    } else if (facet === 'channel') {
+      setRoomChats(prev => {
+        const currentHistory = prev[currentTarget] || [];
+        return { ...prev, [currentTarget]: [...currentHistory, { role: 'user', text: userMsg }] };
+      });
+    } else {
+      setPrivmsgChats(prev => {
+        const currentHistory = prev[currentTarget] || [];
+        return { ...prev, [currentTarget]: [...currentHistory, { role: 'user', text: userMsg }] };
+      });
+    }
+
+    // Also update general modelChats for backwards compatibility
     setModelChats(prev => {
       const currentHistory = prev[currentTarget] || [];
       return { ...prev, [currentTarget]: [...currentHistory, { role: 'user', text: userMsg }] };
@@ -703,6 +1117,9 @@ export default function App() {
         body: JSON.stringify({
           model: modelName,
           message: userMsg,
+          contextType: facet,
+          channelName,
+          anonymousSessionId
         })
       });
       
@@ -714,10 +1131,15 @@ export default function App() {
       const reader = response.body?.getReader();
       const decoder = new TextDecoder();
 
-      setModelChats(prev => {
-        const currentHistory = prev[currentTarget] || [];
-        return { ...prev, [currentTarget]: [...currentHistory, { role: 'model', text: '' }] };
-      });
+      if (facet === 'server') {
+        setServerChats(prev => ({ ...prev, [serverChanKey]: [...(prev[serverChanKey] || []), { role: 'model', text: '' }] }));
+      } else if (facet === 'channel') {
+        setRoomChats(prev => ({ ...prev, [currentTarget]: [...(prev[currentTarget] || []), { role: 'model', text: '' }] }));
+      } else {
+        setPrivmsgChats(prev => ({ ...prev, [currentTarget]: [...(prev[currentTarget] || []), { role: 'model', text: '' }] }));
+      }
+
+      setModelChats(prev => ({ ...prev, [currentTarget]: [...(prev[currentTarget] || []), { role: 'model', text: '' }] }));
 
       if (reader) {
         let chunkText = "";
@@ -735,10 +1157,34 @@ export default function App() {
               try {
                 const data = JSON.parse(dataStr);
                 chunkText += data.text;
+
+                if (facet === 'server') {
+                  setServerChats(prev => {
+                    const currentHistory = prev[serverChanKey] || [];
+                    const newHistory = [...currentHistory];
+                    if (newHistory.length > 0) newHistory[newHistory.length - 1].text = chunkText;
+                    return { ...prev, [serverChanKey]: newHistory };
+                  });
+                } else if (facet === 'channel') {
+                  setRoomChats(prev => {
+                    const currentHistory = prev[currentTarget] || [];
+                    const newHistory = [...currentHistory];
+                    if (newHistory.length > 0) newHistory[newHistory.length - 1].text = chunkText;
+                    return { ...prev, [currentTarget]: newHistory };
+                  });
+                } else {
+                  setPrivmsgChats(prev => {
+                    const currentHistory = prev[currentTarget] || [];
+                    const newHistory = [...currentHistory];
+                    if (newHistory.length > 0) newHistory[newHistory.length - 1].text = chunkText;
+                    return { ...prev, [currentTarget]: newHistory };
+                  });
+                }
+
                 setModelChats(prev => {
                   const currentHistory = prev[currentTarget] || [];
                   const newHistory = [...currentHistory];
-                  newHistory[newHistory.length - 1].text = chunkText;
+                  if (newHistory.length > 0) newHistory[newHistory.length - 1].text = chunkText;
                   return { ...prev, [currentTarget]: newHistory };
                 });
               } catch (e) {}
@@ -748,10 +1194,15 @@ export default function App() {
       }
     } catch (err: any) {
       console.error(err);
-      setModelChats(prev => {
-        const currentHistory = prev[currentTarget] || [];
-        return { ...prev, [currentTarget]: [...currentHistory, { role: 'model', text: `Error: ${err.message || 'Connection failed'}` }] };
-      });
+      const errMsg = `Error: ${err.message || 'Connection failed'}`;
+      if (facet === 'server') {
+        setServerChats(prev => ({ ...prev, [serverChanKey]: [...(prev[serverChanKey] || []), { role: 'model', text: errMsg }] }));
+      } else if (facet === 'channel') {
+        setRoomChats(prev => ({ ...prev, [currentTarget]: [...(prev[currentTarget] || []), { role: 'model', text: errMsg }] }));
+      } else {
+        setPrivmsgChats(prev => ({ ...prev, [currentTarget]: [...(prev[currentTarget] || []), { role: 'model', text: errMsg }] }));
+      }
+      setModelChats(prev => ({ ...prev, [currentTarget]: [...(prev[currentTarget] || []), { role: 'model', text: errMsg }] }));
     } finally {
       setModelLoading(prev => ({ ...prev, [currentTarget]: false }));
       // Remove +l modifier
@@ -762,6 +1213,501 @@ export default function App() {
         return prev;
       });
     }
+  };
+
+  const handleModelSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const currentTarget = baseTarget;
+    if (!modelChatInput.trim() || modelLoading[currentTarget]) return;
+    
+    const userMsg = modelChatInput;
+    setModelChatInput('');
+    const targetChan = activeServerChannel[currentTarget] || '#general';
+    await triggerModelChat(currentTarget, userMsg, currentModelFacet, targetChan);
+  };
+
+  const handlePersonalChannelSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const text = personalInput.trim();
+    if (!text || modelLoading[baseTarget]) return;
+    setPersonalInput('');
+
+    // Handle slash commands inside personal channel input
+    if (text.startsWith('/topic ')) {
+      const newTopic = text.slice(7).trim();
+      setPersonalTopics(prev => ({ ...prev, [baseTarget]: newTopic }));
+      logModeChange(baseTarget, '+t', `Updated personal channel topic: "${newTopic}"`, '@jakedot');
+      return;
+    }
+    if (text === '/clear') {
+      setPersonalChannels(prev => ({ ...prev, [baseTarget]: [] }));
+      return;
+    }
+    if (text.startsWith('/pin ')) {
+      const pinText = text.slice(5).trim();
+      const newPost: PersonalChannelPost = {
+        id: `p-${Date.now()}`,
+        author: 'Jake Dot',
+        handle: '@jakedot',
+        time: 'Just now',
+        content: `📌 [PINNED] ${pinText}`,
+        isPinned: true,
+        role: 'user',
+        likes: 0
+      };
+      setPersonalChannels(prev => ({
+        ...prev,
+        [baseTarget]: [newPost, ...(prev[baseTarget] || [])]
+      }));
+      return;
+    }
+
+    const newPost: PersonalChannelPost = {
+      id: `p-${Date.now()}`,
+      author: 'Jake Dot',
+      handle: '@jakedot',
+      time: 'Just now',
+      content: text,
+      role: 'user',
+      likes: 0
+    };
+
+    setPersonalChannels(prev => ({
+      ...prev,
+      [baseTarget]: [...(prev[baseTarget] || []), newPost]
+    }));
+
+    // If the personal channel belongs to a model object ($duck.ai/#evals or $gemini/#prompts)
+    if (personalOwner.startsWith('$')) {
+      const cleanModel = personalOwner.substring(1);
+      setModelLoading(prev => ({ ...prev, [baseTarget]: true }));
+
+      // Append empty model placeholder
+      const modelPostId = `p-${Date.now() + 1}`;
+      setPersonalChannels(prev => ({
+        ...prev,
+        [baseTarget]: [
+          ...(prev[baseTarget] || []),
+          {
+            id: modelPostId,
+            author: cleanModel,
+            handle: personalOwner,
+            time: 'Just now',
+            content: '',
+            role: 'model',
+            likes: 0
+          }
+        ]
+      }));
+
+      try {
+        const historyData = (personalChannels[baseTarget] || []).map(p => ({
+          role: p.role === 'model' ? 'model' : 'user',
+          parts: [{ text: p.content }]
+        }));
+
+        const response = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            model: cleanModel,
+            message: text,
+            contextType: 'personal_channel',
+            channelName: personalChannelName,
+            history: historyData
+          })
+        });
+
+        if (!response.ok) throw new Error('API Error');
+
+        const reader = response.body?.getReader();
+        const decoder = new TextDecoder();
+        let chunkText = '';
+
+        if (reader) {
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            const chunk = decoder.decode(value, { stream: true });
+            const lines = chunk.split('\n');
+            for (const line of lines) {
+              if (line.startsWith('data: ')) {
+                const dataStr = line.substring(6);
+                if (dataStr === '[DONE]') continue;
+                try {
+                  const data = JSON.parse(dataStr);
+                  chunkText += data.text;
+                  setPersonalChannels(prev => {
+                    const currentList = prev[baseTarget] || [];
+                    const updated = [...currentList];
+                    const idx = updated.findIndex(p => p.id === modelPostId);
+                    if (idx !== -1) {
+                      updated[idx] = { ...updated[idx], content: chunkText };
+                    }
+                    return { ...prev, [baseTarget]: updated };
+                  });
+                } catch (e) {}
+              }
+            }
+          }
+        }
+      } catch (err: any) {
+        setPersonalChannels(prev => {
+          const currentList = prev[baseTarget] || [];
+          const updated = [...currentList];
+          const idx = updated.findIndex(p => p.id === modelPostId);
+          if (idx !== -1) {
+            updated[idx] = { ...updated[idx], content: `Error: ${err.message || 'Failed to generate response'}` };
+          }
+          return { ...prev, [baseTarget]: updated };
+        });
+      } finally {
+        setModelLoading(prev => ({ ...prev, [baseTarget]: false }));
+      }
+    }
+  };
+
+  const togglePinPersonalPost = (postId: string) => {
+    setPersonalChannels(prev => {
+      const list = prev[baseTarget] || [];
+      return {
+        ...prev,
+        [baseTarget]: list.map(p => p.id === postId ? { ...p, isPinned: !p.isPinned } : p)
+      };
+    });
+  };
+
+  const toggleLikePersonalPost = (postId: string) => {
+    setPersonalChannels(prev => {
+      const list = prev[baseTarget] || [];
+      return {
+        ...prev,
+        [baseTarget]: list.map(p => p.id === postId ? { ...p, likes: (p.likes || 0) + 1 } : p)
+      };
+    });
+  };
+
+  const deletePersonalPost = (postId: string) => {
+    setPersonalChannels(prev => {
+      const list = prev[baseTarget] || [];
+      return {
+        ...prev,
+        [baseTarget]: list.filter(p => p.id !== postId)
+      };
+    });
+  };
+
+  const savePersonalTopic = () => {
+    if (topicDraft.trim()) {
+      setPersonalTopics(prev => ({ ...prev, [baseTarget]: topicDraft.trim() }));
+      logModeChange(baseTarget, '+t', `Updated channel topic: "${topicDraft.trim()}"`, '@jakedot');
+    }
+    setEditingPersonalTopic(false);
+  };
+
+  const createPersonalChannel = (e: React.FormEvent) => {
+    e.preventDefault();
+    const cleanSlug = newChannelInput.trim().replace(/^#+/, '').toLowerCase();
+    if (!cleanSlug) return;
+    const newChanId = `${personalOwner}/#${cleanSlug}`;
+    setAddress(newChanId);
+    if (!personalChannels[newChanId]) {
+      setPersonalChannels(prev => ({
+        ...prev,
+        [newChanId]: [
+          {
+            id: `p-${Date.now()}`,
+            author: personalOwner.replace(/^[@$~&§+?£€￠¥₠∮∃∏∑±=×]/, ''),
+            handle: personalOwner,
+            time: 'Just now',
+            content: `📌 [INITIALIZED] Personal channel #${cleanSlug} created under owner ${personalOwner}.\nChannel ID: ${newChanId}\nModes: +p+m+n+t+s`,
+            isPinned: true,
+            role: personalOwner.startsWith('$') ? 'model' : 'user',
+            likes: 1
+          }
+        ]
+      }));
+    }
+    if (!personalTopics[newChanId]) {
+      setPersonalTopics(prev => ({
+        ...prev,
+        [newChanId]: `Personal #${cleanSlug} workspace for ${personalOwner}`
+      }));
+    }
+    setNewChannelInput('');
+    setShowNewChannelInput(false);
+    logModeChange(newChanId, '+p+m+n+t+s', `Created personal channel ${newChanId}`, '@jakedot');
+  };
+
+  const getObjectProps = (target: string): ObjectProp[] => {
+    if (objectPropsStore[target]) {
+      return objectPropsStore[target];
+    }
+    const now = new Date().toLocaleTimeString('en-US', { hour12: false });
+    if (target.startsWith('$')) {
+      return [
+        { id: `pr-dyn-1`, key: 'model.engine', type: 'string', value: target.substring(1), origin: 'PROTOTYPE', isReadOnly: true, description: 'AI inference model engine', schemaRule: 'model_id', updatedAt: now },
+        { id: `pr-dyn-2`, key: 'model.temperature', type: 'number', value: 0.7, origin: 'PROTOTYPE', description: 'Generation temperature', schemaRule: 'range: 0.0..2.0', updatedAt: now },
+        { id: `pr-dyn-3`, key: 'model.context_tokens', type: 'number', value: 1048576, origin: 'PROTOTYPE', description: 'Context window capacity', schemaRule: 'tokens', updatedAt: now },
+        { id: `pr-dyn-4`, key: 'model.trust_tier', type: 'string', value: '+S (Trusted Model Object)', origin: 'INHERITED', description: 'Auto-applied trusted service level', schemaRule: 'enum: [+S, +s]', updatedAt: now },
+        { id: `pr-dyn-5`, key: 'acl.owner', type: 'string', value: '@jakedot', origin: 'PROTOTYPE', description: 'Registered operator identity', schemaRule: 'handle', updatedAt: now }
+      ];
+    } else if (target.startsWith('@')) {
+      return [
+        { id: `pr-dyn-1`, key: 'identity.handle', type: 'string', value: target, origin: 'PROTOTYPE', isReadOnly: true, description: 'User identity identifier', schemaRule: 'pattern: ^@[a-z0-9_]+$', updatedAt: now },
+        { id: `pr-dyn-2`, key: 'identity.role', type: 'string', value: 'Cluster Identity Subobject', origin: 'PROTOTYPE', description: 'Cluster authority level', schemaRule: 'role', updatedAt: now },
+        { id: `pr-dyn-3`, key: 'acl.modes', type: 'string', value: '+v', origin: 'PROTOTYPE', description: 'Active mode bitmask', schemaRule: 'irc_modes', updatedAt: now },
+        { id: `pr-dyn-4`, key: 'quota.daily_messages', type: 'number', value: 5000, origin: 'INHERITED', description: 'Maximum daily dispatch quota', schemaRule: 'min: 0', updatedAt: now }
+      ];
+    } else if (target.startsWith('&')) {
+      return [
+        { id: `pr-dyn-1`, key: 'service.name', type: 'string', value: target.substring(1), origin: 'PROTOTYPE', isReadOnly: true, description: 'Service subsystem moniker', schemaRule: 'service_name', updatedAt: now },
+        { id: `pr-dyn-2`, key: 'service.status', type: 'enum', value: 'ONLINE', origin: 'DYNAMIC_DELTA', description: 'Daemon heartbeat condition', schemaRule: 'enum: [ONLINE, DEGRADED, OFFLINE]', updatedAt: now },
+        { id: `pr-dyn-3`, key: 'network.tls_mode', type: 'string', value: 'TLSv1.3_STRICT', origin: 'PROTOTYPE', description: 'Inter-daemon encryption standard', schemaRule: 'tls_mode', updatedAt: now },
+        { id: `pr-dyn-4`, key: 'modes.inherited', type: 'string', value: '+N+S', origin: 'PROTOTYPE', description: 'Network services mode bitmask', schemaRule: 'irc_modes', updatedAt: now }
+      ];
+    } else if (target.startsWith('~')) {
+      return [
+        { id: `pr-dyn-1`, key: 'kernel.ring', type: 'number', value: 0, origin: 'PROTOTYPE', isReadOnly: true, description: 'Ring-0 execution supervisor level', schemaRule: '0', updatedAt: now },
+        { id: `pr-dyn-2`, key: 'kernel.arch', type: 'string', value: 'x86_64-ivc-vkernel', origin: 'PROTOTYPE', isReadOnly: true, description: 'Micro-kernel architecture', schemaRule: 'arch', updatedAt: now },
+        { id: `pr-dyn-3`, key: 'security.kprobe_active', type: 'boolean', value: true, origin: 'DYNAMIC_DELTA', description: 'Low-level probe trap status', schemaRule: 'boolean', updatedAt: now }
+      ];
+    } else if (target.startsWith('#')) {
+      return [
+        { id: `pr-dyn-1`, key: 'channel.name', type: 'string', value: target, origin: 'PROTOTYPE', isReadOnly: true, description: 'Canonical channel name', schemaRule: 'channel_id', updatedAt: now },
+        { id: `pr-dyn-2`, key: 'channel.topic', type: 'string', value: `Channel ${target} discussion stream`, origin: 'PROTOTYPE', description: 'Channel topic bulletin', schemaRule: 'text', updatedAt: now },
+        { id: `pr-dyn-3`, key: 'channel.moderated', type: 'boolean', value: false, origin: 'PROTOTYPE', description: 'Moderated voice mode (+m)', schemaRule: 'boolean', updatedAt: now },
+        { id: `pr-dyn-4`, key: 'channel.max_members', type: 'number', value: 10000, origin: 'INHERITED', description: 'Capacity ceiling (+l)', schemaRule: 'min: 1', updatedAt: now }
+      ];
+    }
+    return [
+      { id: `pr-dyn-1`, key: 'object.canonical_id', type: 'string', value: target, origin: 'PROTOTYPE', isReadOnly: true, description: 'Canonical IVC addressable target', schemaRule: 'uri', updatedAt: now },
+      { id: `pr-dyn-2`, key: 'object.status', type: 'enum', value: 'READY_ACTIVE', origin: 'DYNAMIC_DELTA', description: 'Runtime lifecycle state', schemaRule: 'enum: [READY_ACTIVE, RESOLVING, OFFLINE]', updatedAt: now },
+      { id: `pr-dyn-3`, key: 'object.created_at', type: 'string', value: '2026-08-19 12:00:00', origin: 'PROTOTYPE', description: 'Instantiation timestamp', schemaRule: 'datetime', updatedAt: now }
+    ];
+  };
+
+  const updateObjectProp = (target: string, propId: string, newValue: any) => {
+    const currentProps = getObjectProps(target);
+    const now = new Date().toLocaleTimeString('en-US', { hour12: false });
+    const updated = currentProps.map(p => {
+      if (p.id === propId) {
+        return {
+          ...p,
+          value: newValue,
+          origin: (p.origin === 'PROTOTYPE' ? 'OVERRIDDEN' : p.origin) as any,
+          updatedAt: now
+        };
+      }
+      return p;
+    });
+    setObjectPropsStore(prev => ({ ...prev, [target]: updated }));
+    logModeChange(target, '§prop', `Updated §prop [${currentProps.find(p => p.id === propId)?.key}] = ${JSON.stringify(newValue)}`, '@jakedot');
+  };
+
+  const addObjectProp = (target: string, newProp: ObjectProp) => {
+    const currentProps = getObjectProps(target);
+    const updated = [...currentProps, newProp];
+    setObjectPropsStore(prev => ({ ...prev, [target]: updated }));
+    logModeChange(target, '§prop', `Added dynamic §prop [${newProp.key}] = ${JSON.stringify(newProp.value)}`, '@jakedot');
+  };
+
+  const deleteObjectProp = (target: string, propId: string) => {
+    const currentProps = getObjectProps(target);
+    const deletedProp = currentProps.find(p => p.id === propId);
+    const updated = currentProps.filter(p => p.id !== propId);
+    setObjectPropsStore(prev => ({ ...prev, [target]: updated }));
+    if (deletedProp) {
+      logModeChange(target, '§prop', `Deleted §prop [${deletedProp.key}]`, '@jakedot');
+    }
+  };
+
+  const resetObjectProps = (target: string) => {
+    if (DEFAULT_OBJECT_PROPS[target]) {
+      setObjectPropsStore(prev => ({ ...prev, [target]: DEFAULT_OBJECT_PROPS[target] }));
+    } else {
+      setObjectPropsStore(prev => {
+        const next = { ...prev };
+        delete next[target];
+        return next;
+      });
+    }
+    logModeChange(target, '§prop', `Reset §props to prototype default for ${target}`, '@jakedot');
+  };
+
+  const getGeneratedSubObjects = (target: string): GeneratedSubObject[] => {
+    const subObjects: GeneratedSubObject[] = [];
+    const isModel = target.startsWith('$');
+    const isUser = target.startsWith('@');
+    const isServices = target.startsWith('&');
+    const isKernel = target.startsWith('~');
+
+    // 1. Personal Channels (/#channel)
+    if (isUser || isModel || isKernel || isServices) {
+      subObjects.push(
+        { path: `${target}/#notes`, name: '#notes', type: 'channel', description: 'Personal notes and task log stream', inheritedModes: '+p+m+n+t+s', activeListeners: 1 },
+        { path: `${target}/#dev`, name: '#dev', type: 'channel', description: 'Development scratchpad and compiler log', inheritedModes: '+p+m+n+t+s', activeListeners: 1 }
+      );
+      if (isModel) {
+        subObjects.push(
+          { path: `${target}/#evals`, name: '#evals', type: 'channel', description: 'Autonomous accuracy benchmark telemetry', inheritedModes: '+p+m+n+t+s+S', activeListeners: 3 },
+          { path: `${target}/#prompts`, name: '#prompts', type: 'channel', description: 'Prompt template sandbox and grounding logs', inheritedModes: '+p+m+n+t+s+S', activeListeners: 2 }
+        );
+      }
+    }
+
+    // 2. Query Sub-Channels (/?#subchannel, /?query)
+    subObjects.push(
+      { path: `${target}/?#telemetry`, name: '?#telemetry', type: 'query_facet', description: 'Real-time telemetry event query filter', inheritedModes: '+t+v', isEphemeral: true, activeListeners: 1 },
+      { path: `${target}/?#audit`, name: '?#audit', type: 'query_facet', description: 'Security audit ledger query filter', inheritedModes: '+n+S', isEphemeral: true, activeListeners: 1 },
+      { path: `${target}/?filter=active`, name: '?filter=active', type: 'query_facet', description: 'Live active status predicate sub-query', inheritedModes: '+v', isEphemeral: true }
+    );
+
+    // 3. Facets & Structural Sub-Objects
+    subObjects.push(
+      { path: `${target}/§props`, name: '§props', type: 'props', description: 'Dynamic typed property matrix and schema rules', inheritedModes: '+n' },
+      { path: `${target}/db`, name: 'db', type: 'db', description: 'Relational database representation and foreign key ledger', inheritedModes: '+N' },
+      { path: `${target}/diff`, name: 'diff', type: 'query_facet', description: 'ΔDiff comparator against prototype baseline', inheritedModes: '+Δ' },
+      { path: `${target}/wire`, name: 'wire', type: 'wire', description: 'IRCv3 / IVC raw socket wire protocol serializer', inheritedModes: '+k' },
+      { path: `${target}/server`, name: 'server', type: 'server', description: 'Multi-channel chat multiplexer facet', inheritedModes: '+N+S', activeListeners: 4 },
+      { path: `${target}/stream`, name: 'stream', type: 'stream', description: 'High-throughput packet interconnect stream (IRQ 33)', inheritedModes: '+t+k', activeListeners: 2 }
+    );
+
+    return subObjects;
+  };
+
+  const getDatabaseRepresentation = (target: string) => {
+    const props = getObjectProps(target);
+    const subObjects = getGeneratedSubObjects(target);
+    const prefixChar = PREFIX_LIST.find(p => target.startsWith(p)) || (target.startsWith('$') ? '$' : target.startsWith('@') ? '@' : target.startsWith('#') ? '#' : target.startsWith('~') ? '~' : target.startsWith('&') ? '&' : '@');
+    
+    const objType = 
+      target.startsWith('$') ? 'MODEL_OBJECT' :
+      target.startsWith('@') ? 'USER_IDENTITY' :
+      target.startsWith('&') ? 'NETWORK_SERVICE' :
+      target.startsWith('~') ? 'NETADMIN_KERNEL' :
+      target.startsWith('#') ? 'CHANNEL_GROUP' : 'SCHEMA_UNIT';
+
+    const objectsTableRow = {
+      id: target,
+      prefix: prefixChar,
+      canonical_name: target,
+      owner_id: target.startsWith('@') ? target : '@jakedot',
+      parent_id: target.includes('/') ? target.split('/')[0] : 'ROOT_NODE',
+      object_type: objType,
+      is_active: true,
+      created_at: '2026-08-19 10:00:00.000',
+      status: 'ACTIVE_ONLINE'
+    };
+
+    const propsTableRows = props.map(p => ({
+      id: p.id,
+      object_id: target,
+      prop_key: p.key,
+      prop_type: p.type,
+      prop_val: typeof p.value === 'object' ? JSON.stringify(p.value) : String(p.value),
+      origin: p.origin,
+      is_readonly: p.isReadOnly ? 1 : 0,
+      updated_at: p.updatedAt
+    }));
+
+    const modesTableRows = [
+      { id: `ml-1`, target_object: target, mode_char: '+v', is_active: 1, granted_by: '@jakedot', timestamp: '12:42:15', scope: 'Object' },
+      { id: `ml-2`, target_object: target, mode_char: '+S', is_active: 1, granted_by: 'SYSTEM', timestamp: '12:30:00', scope: 'Global' },
+      { id: `ml-3`, target_object: target, mode_char: '+t', is_active: 1, granted_by: 'PARSER', timestamp: '12:00:00', scope: 'Telemetry' },
+      { id: `ml-4`, target_object: target, mode_char: '+p', is_active: target.includes('/#') ? 1 : 0, granted_by: 'ROUTER', timestamp: '11:00:00', scope: 'Personal' }
+    ];
+
+    const subObjectsTableRows = subObjects.map((s, idx) => ({
+      id: `sub-${idx + 1}`,
+      parent_id: target,
+      sub_path: s.path,
+      sub_type: s.type,
+      inheritance_mask: s.inheritedModes,
+      is_ephemeral: s.isEphemeral ? 1 : 0
+    }));
+
+    return {
+      objectsTableRow,
+      propsTableRows,
+      modesTableRows,
+      subObjectsTableRows
+    };
+  };
+
+  const executeDbSqlQuery = (query: string, target: string) => {
+    const cleanQuery = query.trim().toUpperCase();
+    const db = getDatabaseRepresentation(target);
+
+    if (cleanQuery.includes('FROM IVC_OBJECTS')) {
+      return {
+        columns: ['id', 'prefix', 'canonical_name', 'owner_id', 'parent_id', 'object_type', 'is_active', 'status'],
+        rows: [[
+          db.objectsTableRow.id,
+          db.objectsTableRow.prefix,
+          db.objectsTableRow.canonical_name,
+          db.objectsTableRow.owner_id,
+          db.objectsTableRow.parent_id,
+          db.objectsTableRow.object_type,
+          'true',
+          db.objectsTableRow.status
+        ]]
+      };
+    } else if (cleanQuery.includes('FROM IVC_PROPS')) {
+      return {
+        columns: ['id', 'object_id', 'prop_key', 'prop_type', 'prop_val', 'origin', 'is_readonly', 'updated_at'],
+        rows: db.propsTableRows.map(r => [r.id, r.object_id, r.prop_key, r.prop_type, r.prop_val, r.origin, r.is_readonly ? '1' : '0', r.updated_at])
+      };
+    } else if (cleanQuery.includes('FROM IVC_MODES_LEDGER') || cleanQuery.includes('FROM MODES')) {
+      return {
+        columns: ['id', 'target_object', 'mode_char', 'is_active', 'granted_by', 'timestamp', 'scope'],
+        rows: db.modesTableRows.map(r => [r.id, r.target_object, r.mode_char, r.is_active ? '1' : '0', r.granted_by, r.timestamp, r.scope])
+      };
+    } else if (cleanQuery.includes('FROM IVC_SUB_OBJECTS') || cleanQuery.includes('FROM SUB_OBJECTS')) {
+      return {
+        columns: ['id', 'parent_id', 'sub_path', 'sub_type', 'inheritance_mask', 'is_ephemeral'],
+        rows: db.subObjectsTableRows.map(r => [r.id, r.parent_id, r.sub_path, r.sub_type, r.inheritance_mask, r.is_ephemeral ? '1' : '0'])
+      };
+    }
+
+    return {
+      columns: ['query_status', 'target', 'matching_props', 'matching_subobjects', 'ledger_records'],
+      rows: [['SUCCESS', target, db.propsTableRows.length, db.subObjectsTableRows.length, db.modesTableRows.length]]
+    };
+  };
+
+  const getRawWireRepresentation = (target: string) => {
+    const props = getObjectProps(target);
+    const activeModesStr = `+${modifiers.join('+') || 'v'}`;
+    const frameLines = [
+      `:origin.ivc.net 001 @jakedot :Welcome to the IVC Object Bus Fabric (v2.4)`,
+      `:origin.ivc.net 002 @jakedot :Your host is node-01.us-west.ivc.internal running ivc-vkernel-6.12`,
+      `:origin.ivc.net 004 @jakedot ivc-node-01 2.4 ao-s+v mntS`,
+      `MODE ${target} ${activeModesStr}`,
+      ...props.slice(0, 4).map(p => `§PROP SET ${target} ${p.key}=${JSON.stringify(p.value)}`),
+      `JOIN ${target}`,
+      `:system!daemon@services.ivc.net NOTICE ${target} :Bound memory sandbox interconnect MTU=1500 IRQ=33`,
+      `:telemetry@probe.ivc.net TRACE ${target} :STATE_TRANSITION -> READY_ACTIVE`
+    ];
+
+    const rawString = frameLines.join('\r\n');
+    const byteLength = new TextEncoder().encode(rawString).length;
+    const crc32 = '0x' + (Math.abs(rawString.split('').reduce((a, b) => { a = ((a << 5) - a) + b.charCodeAt(0); return a & a }, 0))).toString(16).padStart(8, '0').toUpperCase();
+
+    return {
+      frameLines,
+      rawString,
+      byteLength,
+      crc32,
+      sequenceId: 489201,
+      cipher: 'AES-256-GCM / TLSv1.3'
+    };
+  };
+
+  const copyToClipboard = (text: string, label: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedNotification(label);
+    setTimeout(() => setCopiedNotification(null), 2500);
   };
 
   const renderPost = (post: Post) => {
@@ -2475,91 +3421,1072 @@ export default function App() {
       );
     }
 
-    // 4. SUBOBJECTS RENDERING (+ignore, +ban, +like, +bookmarks, +pm, +raw-vm, +ao-s)
-    if (isModel && !isRaw) {
-      const history = modelChats[baseTarget] || [];
-      const modelName = baseTarget.substring(1);
-      const isLoading = modelLoading[baseTarget] || isL;
-      
+    // 3.5. PERSONAL CHANNELS RENDERING (<prefix><object>/#channel)
+    if (isPersonalChannel && !isRaw) {
+      const postsForThisChannel = personalChannels[baseTarget] || [];
+      const currentTopic = personalTopics[baseTarget] || `Personal scoped channel for ${personalOwner}`;
+      const isOwnerModel = personalOwner.startsWith('$');
+      const isOwnerUser = personalOwner.startsWith('@');
+      const isOwnerServices = personalOwner.startsWith('&');
+      const isOwnerRoot = personalOwner.startsWith('~');
+      const isOwnerSpec = personalOwner.startsWith('§');
+
+      // Find all sibling channels for this owner
+      const siblingChannels = Object.keys(personalChannels)
+        .filter(k => k.startsWith(`${personalOwner}/#`))
+        .map(k => k.replace(`${personalOwner}/#`, '#'));
+
+      // Ensure current slug is in the list
+      if (!siblingChannels.includes(personalChannelName)) {
+        siblingChannels.push(personalChannelName);
+      }
+
+      // Default sibling recommendations if none exist
+      if (siblingChannels.length === 1) {
+        if (isOwnerUser && !siblingChannels.includes('#notes')) siblingChannels.push('#notes');
+        if (isOwnerUser && !siblingChannels.includes('#dev')) siblingChannels.push('#dev');
+        if (isOwnerModel && !siblingChannels.includes('#evals')) siblingChannels.push('#evals');
+        if (isOwnerModel && !siblingChannels.includes('#prompts')) siblingChannels.push('#prompts');
+      }
+
+      const isPrivPersonal = !targetNegated.includes('p');
+      const isModPersonal = !targetNegated.includes('m');
+
       return (
-        <div className="flex flex-col h-[calc(100vh-140px)]">
-          <div className="p-4 border-b border-indigo-200 bg-indigo-50 sticky top-0 flex justify-between items-center z-10">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-indigo-200 text-indigo-700 rounded-lg flex items-center justify-center font-bold">
-                <Sparkles className="w-5 h-5" />
-              </div>
-              <div>
-                <h2 className="font-bold leading-tight text-indigo-900">
-                  Trusted Object
-                </h2>
-                <p className="text-xs text-indigo-600 font-mono">
-                  {modelName}{isLoading ? '+l' : ''} (Bi-directional)
-                </p>
-              </div>
-            </div>
-            <button 
-              onClick={() => setAddress(address + '+raw')}
-              className="flex items-center space-x-1 px-2 py-1 bg-indigo-200 text-indigo-800 text-[10px] font-bold rounded uppercase tracking-widest hover:bg-indigo-300 transition-colors"
-            >
-              <Code className="w-3 h-3" />
-              <span>RAW</span>
-            </button>
-          </div>
-          
-          <div className="flex-1 p-4 flex flex-col space-y-4 overflow-y-auto bg-gray-50 pb-20">
-            {history.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-full text-indigo-300">
-                <Sparkles className="w-12 h-12 mb-3 text-indigo-200" />
-                <p className="text-sm font-medium">Session initialized. Send a message to invoke {modelName}.</p>
-              </div>
-            ) : (
-              history.map((msg, i) => (
-                <div key={i} className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
-                  <div className={`rounded-2xl px-4 py-3 max-w-[85%] shadow-sm ${
-                    msg.role === 'user' 
-                      ? 'bg-blue-600 text-white rounded-tr-sm' 
-                      : 'bg-white border border-gray-200 text-gray-800 rounded-tl-sm'
-                  }`}>
-                    <p className={`text-[13px] leading-relaxed whitespace-pre-wrap ${msg.role === 'user' ? '' : 'font-mono'}`}>
-                      {msg.text}
-                    </p>
-                    {msg.role === 'model' && msg.text.length === 0 && isLoading && i === history.length - 1 && (
-                      <div className="flex items-center space-x-1 mt-1">
-                        <span className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce" style={{animationDelay: '0ms'}}></span>
-                        <span className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce" style={{animationDelay: '150ms'}}></span>
-                        <span className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce" style={{animationDelay: '300ms'}}></span>
-                      </div>
+        <div className="flex flex-col h-[calc(100vh-140px)] bg-slate-950 text-slate-100 font-sans pb-14 overflow-hidden select-text">
+          {/* Top Banner Header */}
+          <div className="p-4 border-b border-slate-800 bg-[#090e17] sticky top-0 z-10 flex flex-col space-y-3">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+              <div className="flex items-center space-x-3">
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center border shadow-sm ${
+                  isOwnerModel ? 'bg-indigo-950/80 border-indigo-700 text-indigo-300' :
+                  isOwnerUser ? 'bg-emerald-950/80 border-emerald-700 text-emerald-300' :
+                  isOwnerServices ? 'bg-blue-950/80 border-blue-700 text-blue-300' :
+                  isOwnerRoot ? 'bg-rose-950/80 border-rose-700 text-rose-300' :
+                  isOwnerSpec ? 'bg-amber-950/80 border-amber-700 text-amber-300' :
+                  'bg-slate-900 border-slate-700 text-slate-300'
+                }`}>
+                  {isOwnerModel ? <Sparkles className="w-5 h-5" /> :
+                   isOwnerUser ? <User className="w-5 h-5" /> :
+                   isOwnerServices ? <Server className="w-5 h-5" /> :
+                   isOwnerRoot ? <Shield className="w-5 h-5" /> :
+                   isOwnerSpec ? <FileText className="w-5 h-5" /> :
+                   <Hash className="w-5 h-5" />}
+                </div>
+                <div>
+                  <div className="flex items-center space-x-2 flex-wrap gap-1">
+                    <span className="font-mono font-bold text-white text-base tracking-tight">{baseTarget}</span>
+                    <span className="px-2 py-0.5 text-[10px] uppercase font-bold rounded bg-slate-800 text-slate-300 border border-slate-700">
+                      Personal Channel
+                    </span>
+                    {isPrivPersonal && (
+                      <span className="px-1.5 py-0.5 text-[9px] font-bold rounded bg-purple-950 text-purple-300 border border-purple-800 flex items-center">
+                        <Lock className="w-2.5 h-2.5 mr-0.5" />
+                        +p Personal
+                      </span>
+                    )}
+                    {isModPersonal && (
+                      <span className="px-1.5 py-0.5 text-[9px] font-bold rounded bg-amber-950 text-amber-300 border border-amber-800">
+                        +m Moderated
+                      </span>
+                    )}
+                    <span className="px-1.5 py-0.5 text-[9px] font-bold rounded bg-teal-950 text-teal-300 border border-teal-800">
+                      +n+t+s
+                    </span>
+                    {isV && (
+                      <span className="px-1.5 py-0.5 text-[9px] font-bold rounded bg-emerald-950 text-emerald-300 border border-emerald-800 flex items-center">
+                        <Volume2 className="w-2.5 h-2.5 mr-0.5" />
+                        +v Voiced
+                      </span>
                     )}
                   </div>
+                  <div className="flex items-center space-x-2 text-xs text-slate-400 mt-0.5">
+                    <span>Owner & Founder:</span>
+                    <button
+                      onClick={() => setAddress(personalOwner)}
+                      className="font-mono text-cyan-400 hover:text-cyan-300 hover:underline font-bold"
+                    >
+                      {personalOwner}
+                    </button>
+                    <span>·</span>
+                    <span className="text-[11px] text-slate-400">{postsForThisChannel.length} recorded items</span>
+                  </div>
                 </div>
-              ))
+              </div>
+
+              {/* Action Toolbar */}
+              <div className="flex items-center space-x-1.5 flex-wrap gap-1">
+                <button
+                  onClick={() => setAddress(`${baseTarget}+Δmodes`)}
+                  className="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-medium flex items-center space-x-1 transition-colors"
+                >
+                  <SlidersHorizontal className="w-3.5 h-3.5 text-blue-400" />
+                  <span>Δmodes</span>
+                </button>
+                <button
+                  onClick={() => setAddress(`${baseTarget}+t`)}
+                  className="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-medium flex items-center space-x-1 transition-colors"
+                >
+                  <Radio className="w-3.5 h-3.5 text-cyan-400" />
+                  <span>+t Trace</span>
+                </button>
+                <button
+                  onClick={() => {
+                    const newNegated = targetNegated.includes('v')
+                      ? targetNegated.filter(m => m !== 'v')
+                      : [...targetNegated, 'v'];
+                    setNegatedModes(prev => ({ ...prev, [baseTarget]: newNegated }));
+                    logModeChange(baseTarget, isV ? '-v' : '+v', isV ? 'Revoked voice override permission' : 'Granted voice override permission (+v)', '@jakedot');
+                  }}
+                  className={`px-2.5 py-1.5 rounded-lg border text-xs font-medium flex items-center space-x-1 transition-colors ${
+                    isV
+                      ? 'bg-emerald-950 hover:bg-emerald-900 border-emerald-700 text-emerald-300'
+                      : 'bg-slate-800 hover:bg-slate-700 border-slate-700 text-slate-300'
+                  }`}
+                >
+                  <Volume2 className="w-3.5 h-3.5" />
+                  <span>{isV ? 'Voiced (+v)' : 'Grant +v'}</span>
+                </button>
+                <button
+                  onClick={() => setAddress(`${baseTarget}+raw`)}
+                  className="px-2.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-slate-200 border border-slate-800 text-xs font-mono transition-colors"
+                >
+                  +raw
+                </button>
+              </div>
+            </div>
+
+            {/* Editable Topic Bar */}
+            <div className="bg-slate-900/90 border border-slate-800/80 rounded-lg p-2.5 flex items-center justify-between text-xs">
+              <div className="flex items-center space-x-2 flex-1 mr-2 overflow-hidden">
+                <Info className="w-4 h-4 text-slate-400 flex-shrink-0" />
+                {editingPersonalTopic ? (
+                  <div className="flex items-center space-x-2 flex-1">
+                    <input
+                      type="text"
+                      value={topicDraft}
+                      onChange={(e) => setTopicDraft(e.target.value)}
+                      placeholder="Set personal channel topic..."
+                      className="flex-1 bg-slate-950 border border-cyan-800 text-white rounded px-2 py-1 text-xs outline-none focus:border-cyan-500"
+                      autoFocus
+                    />
+                    <button
+                      onClick={savePersonalTopic}
+                      className="px-2 py-1 bg-cyan-600 hover:bg-cyan-500 text-white rounded font-bold text-xs"
+                    >
+                      Save
+                    </button>
+                    <button
+                      onClick={() => setEditingPersonalTopic(false)}
+                      className="px-2 py-1 bg-slate-800 text-slate-400 hover:text-slate-200 rounded text-xs"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                ) : (
+                  <span className="text-slate-300 truncate font-mono">
+                    <strong className="text-slate-400 font-sans mr-1.5">Topic:</strong>
+                    {currentTopic}
+                  </span>
+                )}
+              </div>
+              {!editingPersonalTopic && (
+                <button
+                  onClick={() => {
+                    setTopicDraft(currentTopic);
+                    setEditingPersonalTopic(true);
+                  }}
+                  className="text-slate-400 hover:text-cyan-300 text-[11px] font-medium flex items-center space-x-1 flex-shrink-0"
+                >
+                  <Edit3 className="w-3 h-3 mr-0.5" />
+                  <span>Edit Topic</span>
+                </button>
+              )}
+            </div>
+
+            {/* Personal Sibling Channels Bar */}
+            <div className="flex items-center space-x-1.5 overflow-x-auto pb-1 text-xs">
+              <span className="text-[11px] text-slate-400 font-medium whitespace-nowrap mr-1 flex items-center">
+                <Folder className="w-3.5 h-3.5 mr-1 text-slate-400" />
+                {personalOwner} Channels:
+              </span>
+              {siblingChannels.map(chName => {
+                const isCurrent = chName === personalChannelName;
+                const fullSiblingId = `${personalOwner}/${chName}`;
+                return (
+                  <button
+                    key={chName}
+                    onClick={() => setAddress(fullSiblingId)}
+                    className={`px-2.5 py-1 rounded-md text-xs font-mono transition-colors border whitespace-nowrap ${
+                      isCurrent
+                        ? 'bg-blue-600/30 text-blue-200 border-blue-500/60 font-bold'
+                        : 'bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-slate-200 border-slate-800'
+                    }`}
+                  >
+                    {chName}
+                  </button>
+                );
+              })}
+
+              {showNewChannelInput ? (
+                <form onSubmit={createPersonalChannel} className="flex items-center space-x-1.5">
+                  <div className="flex items-center bg-slate-900 border border-blue-500 rounded px-2 py-0.5">
+                    <span className="text-slate-400 font-mono text-xs">#</span>
+                    <input
+                      type="text"
+                      value={newChannelInput}
+                      onChange={(e) => setNewChannelInput(e.target.value)}
+                      placeholder="new-channel"
+                      className="bg-transparent text-white text-xs outline-none w-24 font-mono"
+                      autoFocus
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    className="px-2 py-1 bg-blue-600 hover:bg-blue-500 text-white rounded text-xs font-bold"
+                  >
+                    Create
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowNewChannelInput(false)}
+                    className="px-1.5 py-1 text-slate-400 hover:text-slate-200 text-xs"
+                  >
+                    ✕
+                  </button>
+                </form>
+              ) : (
+                <button
+                  onClick={() => setShowNewChannelInput(true)}
+                  className="px-2 py-1 rounded-md bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-blue-300 border border-dashed border-slate-700 text-xs flex items-center space-x-1 whitespace-nowrap transition-colors"
+                >
+                  <Plus className="w-3 h-3 mr-0.5" />
+                  <span>New Channel</span>
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Main Personal Stream Messages */}
+          <div className="flex-1 overflow-y-auto p-4 space-y-3.5">
+            {postsForThisChannel.length === 0 ? (
+              <div className="p-8 text-center flex flex-col items-center justify-center border border-dashed border-slate-800 rounded-xl bg-slate-900/30 my-4">
+                <div className="w-12 h-12 rounded-full bg-slate-900 flex items-center justify-center text-slate-400 mb-3">
+                  <Hash className="w-6 h-6" />
+                </div>
+                <h3 className="text-sm font-bold text-slate-200">Personal Channel {baseTarget} Initialized</h3>
+                <p className="text-xs text-slate-400 max-w-md mt-1 mb-4">
+                  This is a dedicated personal stream scoped under <strong className="text-cyan-400 font-mono">{personalOwner}</strong>. Messages, logs, notes, or AI evaluations published here remain within this channel's isolated context.
+                </p>
+                <div className="flex items-center space-x-2 text-xs">
+                  <button
+                    onClick={() => {
+                      const welcomePost: PersonalChannelPost = {
+                        id: `p-${Date.now()}`,
+                        author: personalOwner.replace(/^[@$~&§+?£€￠¥₠∮∃∏∑±=×]/, ''),
+                        handle: personalOwner,
+                        time: 'Just now',
+                        content: `📌 [FOUNDER BULLETIN] Personal workspace initialized for ${personalOwner}.\nChannel: ${baseTarget}\nReady for notes, task checklists, or telemetry.`,
+                        isPinned: true,
+                        role: isOwnerModel ? 'model' : 'user',
+                        likes: 1
+                      };
+                      setPersonalChannels(prev => ({ ...prev, [baseTarget]: [welcomePost] }));
+                    }}
+                    className="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-medium transition-colors"
+                  >
+                    Post Initial Welcome Bulletin
+                  </button>
+                </div>
+              </div>
+            ) : (
+              postsForThisChannel.map((p) => {
+                const isMsgModel = p.role === 'model' || p.handle.startsWith('$');
+                const isMsgSystem = p.role === 'system' || p.handle.startsWith('~');
+
+                return (
+                  <div
+                    key={p.id}
+                    className={`p-3.5 rounded-xl border transition-all ${
+                      p.isPinned
+                        ? 'bg-[#0f172a]/90 border-blue-900/60 ring-1 ring-blue-500/20'
+                        : isMsgModel
+                        ? 'bg-[#0d1222]/80 border-indigo-950/80'
+                        : isMsgSystem
+                        ? 'bg-[#181119]/80 border-rose-950/80'
+                        : 'bg-slate-900/70 border-slate-800/80'
+                    }`}
+                  >
+                    {/* Header line of post */}
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center space-x-2">
+                        <div className={`w-7 h-7 rounded-lg flex items-center justify-center font-bold text-xs border ${
+                          isMsgModel ? 'bg-indigo-950 text-indigo-300 border-indigo-700' :
+                          isMsgSystem ? 'bg-rose-950 text-rose-300 border-rose-700' :
+                          'bg-emerald-950 text-emerald-300 border-emerald-700'
+                        }`}>
+                          {isMsgModel ? <Sparkles className="w-3.5 h-3.5" /> :
+                           isMsgSystem ? <Shield className="w-3.5 h-3.5" /> :
+                           <User className="w-3.5 h-3.5" />}
+                        </div>
+                        <div>
+                          <div className="flex items-center space-x-1.5">
+                            <span className="font-bold text-slate-100 text-xs">{p.author}</span>
+                            <span className="font-mono text-[10px] text-slate-400">{p.handle}</span>
+                            {p.handle === personalOwner && (
+                              <span className="px-1 py-0.2 bg-blue-950 text-blue-300 border border-blue-800 text-[9px] font-bold rounded">
+                                OWNER
+                              </span>
+                            )}
+                            {p.isPinned && (
+                              <span className="px-1.5 py-0.2 bg-amber-950 text-amber-300 border border-amber-800 text-[9px] font-bold rounded flex items-center">
+                                <Pin className="w-2.5 h-2.5 mr-0.5" />
+                                PINNED
+                              </span>
+                            )}
+                          </div>
+                          <span className="text-[10px] text-slate-400">{p.time}</span>
+                        </div>
+                      </div>
+
+                      {/* Post actions */}
+                      <div className="flex items-center space-x-1 text-slate-400">
+                        <button
+                          onClick={() => toggleLikePersonalPost(p.id)}
+                          className={`p-1 rounded hover:bg-slate-800 transition-colors flex items-center space-x-1 text-[11px] ${
+                            (p.likes || 0) > 0 ? 'text-rose-400' : 'text-slate-400 hover:text-rose-300'
+                          }`}
+                          title="Like item"
+                        >
+                          <Heart className={`w-3.5 h-3.5 ${(p.likes || 0) > 0 ? 'fill-current' : ''}`} />
+                          {(p.likes || 0) > 0 && <span>{p.likes}</span>}
+                        </button>
+                        <button
+                          onClick={() => togglePinPersonalPost(p.id)}
+                          className={`p-1 rounded hover:bg-slate-800 transition-colors ${
+                            p.isPinned ? 'text-amber-400' : 'text-slate-400 hover:text-amber-300'
+                          }`}
+                          title={p.isPinned ? 'Unpin message' : 'Pin message'}
+                        >
+                          <Pin className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={() => {
+                            navigator.clipboard.writeText(p.content);
+                          }}
+                          className="p-1 rounded hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition-colors"
+                          title="Copy text"
+                        >
+                          <Copy className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={() => deletePersonalPost(p.id)}
+                          className="p-1 rounded hover:bg-slate-800 text-slate-400 hover:text-red-400 transition-colors"
+                          title="Delete message"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Post Content */}
+                    <div className="text-xs text-slate-200 whitespace-pre-wrap font-sans leading-relaxed pl-9">
+                      {p.content ? (
+                        p.content
+                      ) : (
+                        <div className="flex items-center space-x-2 text-indigo-400 py-1 font-mono text-[11px]">
+                          <Sparkles className="w-3.5 h-3.5 animate-spin" />
+                          <span>Generating model response in personal channel context...</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })
+            )}
+
+            {modelLoading[baseTarget] && (
+              <div className="p-3 bg-indigo-950/40 border border-indigo-800/40 rounded-xl flex items-center space-x-2.5 text-xs text-indigo-300">
+                <Sparkles className="w-4 h-4 text-indigo-400 animate-spin" />
+                <span className="font-mono">{personalOwner} is computing stream payload for {personalChannelName}...</span>
+              </div>
             )}
             <div ref={chatEndRef} />
           </div>
 
-          <form onSubmit={handleModelSubmit} className="p-3 bg-white border-t border-gray-200 flex flex-col space-y-2 relative">
-            <div className="flex items-center space-x-2 text-xs text-indigo-600 font-mono px-2">
-              <Terminal className="w-3 h-3" />
-              <span>Input stream active:</span>
-            </div>
-            <div className="flex items-center space-x-2">
-              <input 
-                type="text" 
-                value={modelChatInput}
-                onChange={e => setModelChatInput(e.target.value)}
-                placeholder="Type your message..." 
-                disabled={isLoading}
-                className="flex-1 bg-gray-100 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500 font-mono disabled:opacity-50" 
-              />
-              <button 
+          {/* Bottom Message Input Bar */}
+          <div className="p-3 border-t border-slate-800 bg-[#090e17] sticky bottom-0 z-10 flex flex-col space-y-2">
+            <form onSubmit={handlePersonalChannelSubmit} className="flex items-center space-x-2">
+              <div className="flex-1 flex items-center bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 focus-within:border-blue-500 transition-all shadow-inner">
+                <span className="text-slate-400 font-mono text-xs mr-2">{personalChannelName} ›</span>
+                <input
+                  type="text"
+                  value={personalInput}
+                  onChange={(e) => setPersonalInput(e.target.value)}
+                  placeholder={`Post to ${baseTarget}... (try /topic, /pin, /clear)`}
+                  disabled={modelLoading[baseTarget]}
+                  className="bg-transparent flex-1 text-xs text-white placeholder-slate-400 outline-none"
+                />
+              </div>
+              <button
                 type="submit"
-                disabled={!modelChatInput.trim() || isLoading}
-                className="w-9 h-9 rounded-lg flex items-center justify-center text-white flex-shrink-0 transition-all active:scale-95 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50"
+                disabled={!personalInput.trim() || modelLoading[baseTarget]}
+                className="px-4 py-2.5 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl font-bold text-xs shadow-sm flex items-center space-x-1.5 transition-all"
               >
-                <Send className="w-4 h-4 ml-0.5" />
+                <Send className="w-3.5 h-3.5" />
+                <span>Post</span>
+              </button>
+            </form>
+
+            {/* Quick Slash Command & Helper Chips */}
+            <div className="flex items-center space-x-1.5 overflow-x-auto text-[10px] text-slate-400">
+              <span className="text-slate-400 font-semibold mr-1">Shortcuts:</span>
+              <button
+                type="button"
+                onClick={() => setPersonalInput('/pin ')}
+                className="px-2 py-0.5 rounded bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 font-mono"
+              >
+                /pin &lt;text&gt;
+              </button>
+              <button
+                type="button"
+                onClick={() => setPersonalInput('/topic ')}
+                className="px-2 py-0.5 rounded bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 font-mono"
+              >
+                /topic &lt;text&gt;
+              </button>
+              <button
+                type="button"
+                onClick={() => setPersonalInput('/clear')}
+                className="px-2 py-0.5 rounded bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 font-mono"
+              >
+                /clear
+              </button>
+              {isOwnerModel && (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPersonalInput('Run autonomous benchmark evaluation for this personal channel.');
+                    }}
+                    className="px-2 py-0.5 rounded bg-indigo-950/80 hover:bg-indigo-900 text-indigo-300 border border-indigo-800 font-medium"
+                  >
+                    ✨ Run Eval
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPersonalInput('Summarize the current task status and channel notes.');
+                    }}
+                    className="px-2 py-0.5 rounded bg-indigo-950/80 hover:bg-indigo-900 text-indigo-300 border border-indigo-800 font-medium"
+                  >
+                    ✨ Summarize Channel
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // 4. SUBOBJECTS RENDERING (+ignore, +ban, +like, +bookmarks, +pm, +raw-vm, +ao-s)
+    if (isModel && !isRaw) {
+      const modelName = baseTarget.startsWith('$') ? baseTarget.substring(1) : baseTarget;
+      const isLoading = modelLoading[baseTarget] || isL;
+      
+      const serverChannels = [
+        { name: '#general', desc: 'Main Neural Broadcast & Operator Channel' },
+        { name: '#dev-chat', desc: 'Architecture, Protocols & IRC Diagnostics' },
+        { name: '#code-gen', desc: 'Script Synthesis, Parsing & Algorithms' },
+        { name: '#system-prompt', desc: 'Kernel Prompt Inspection & Context' },
+        { name: '#raw-stream', desc: 'Token Serialization & Ingress Bus' },
+        { name: '#inferences', desc: 'Latency Telemetry & Rate Audits' },
+      ];
+
+      const currentChan = activeServerChannel[baseTarget] || '#general';
+      const serverChanKey = `${baseTarget}:${currentChan}`;
+      const activeServerHistory = serverChats[serverChanKey] || [];
+      const activeRoomHistory = roomChats[baseTarget] || [];
+      const activePrivmsgHistory = privmsgChats[baseTarget] || [];
+
+      const setFacet = (facet: 'server' | 'channel' | 'privmsg') => {
+        setManualFacet(prev => ({ ...prev, [baseTarget]: facet }));
+        if (facet === 'server') {
+          setAddress(`${baseTarget}+server`);
+        } else if (facet === 'channel') {
+          setAddress(`${baseTarget}+join`);
+        } else {
+          setAddress(`${baseTarget}+privmsg`);
+        }
+      };
+
+      const selectChannel = (chan: string) => {
+        setActiveServerChannel(prev => ({ ...prev, [baseTarget]: chan }));
+      };
+
+      const sendQuickPrompt = (promptText: string) => {
+        if (currentModelFacet === 'server') {
+          triggerModelChat(baseTarget, promptText, 'server', currentChan);
+        } else if (currentModelFacet === 'channel') {
+          triggerModelChat(baseTarget, promptText, 'channel', currentChan);
+        } else {
+          triggerModelChat(baseTarget, promptText, 'privmsg', currentChan);
+        }
+      };
+
+      return (
+        <div className="flex flex-col h-[calc(100vh-140px)] bg-slate-950 text-slate-100">
+          {/* Main Model Object Header */}
+          <div className="p-3.5 border-b border-indigo-950/80 bg-[#070a14] sticky top-0 z-10 flex flex-col space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <div className="w-9 h-9 bg-indigo-950/70 border border-indigo-700/50 text-indigo-300 rounded-lg flex items-center justify-center font-bold shadow-inner">
+                  <Sparkles className="w-5 h-5 text-indigo-400" />
+                </div>
+                <div>
+                  <div className="flex items-center space-x-2">
+                    <h2 className="font-bold text-sm leading-tight text-white flex items-center space-x-1.5 font-mono">
+                      <span>${modelName}</span>
+                      <span className="px-1.5 py-0.2 rounded text-[10px] font-bold bg-indigo-950 border border-indigo-700 text-indigo-300">
+                        +S TRUSTED OBJECT
+                      </span>
+                    </h2>
+                  </div>
+                  <p className="text-[11px] text-slate-400 font-mono">
+                    Autonomous Neural Entity &bull; Tri-Context Interface {isLoading ? '+l [STREAMING]' : ''}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center space-x-1.5">
+                <button
+                  onClick={() => setAddress(`${baseTarget}+Δmodes`)}
+                  className="px-2.5 py-1 bg-indigo-950/80 hover:bg-indigo-900 border border-indigo-800/80 text-indigo-200 text-[11px] font-bold rounded flex items-center space-x-1 transition-colors"
+                  title="Edit Modes & Hierarchy"
+                >
+                  <Sliders className="w-3 h-3 text-indigo-400" />
+                  <span>Δmodes</span>
+                </button>
+                <button
+                  onClick={() => setAddress(`${baseTarget}+t`)}
+                  className={`px-2 py-1 border text-[11px] font-bold rounded flex items-center space-x-1 transition-colors ${
+                    isT ? 'bg-cyan-950 text-cyan-300 border-cyan-700 font-bold' : 'bg-slate-900 text-slate-400 border-slate-800 hover:bg-slate-800'
+                  }`}
+                  title="Toggle Trace Telemetry (+t)"
+                >
+                  <Activity className="w-3 h-3" />
+                  <span>+t</span>
+                </button>
+                <button 
+                  onClick={() => setAddress(address + '+raw')}
+                  className="px-2 py-1 bg-slate-900 hover:bg-slate-800 text-slate-400 border border-slate-800 text-[11px] font-bold rounded flex items-center space-x-1 transition-colors"
+                >
+                  <Code className="w-3 h-3" />
+                  <span>RAW</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Facet Switcher Tabs */}
+            <div className="flex items-center space-x-2 pt-1 border-t border-slate-800/60 overflow-x-auto">
+              <button
+                onClick={() => setFacet('server')}
+                className={`flex items-center space-x-1.5 px-3 py-1.5 rounded text-xs font-semibold transition-all border whitespace-nowrap ${
+                  currentModelFacet === 'server'
+                    ? 'bg-indigo-900/90 text-white border-indigo-500 shadow-sm'
+                    : 'bg-slate-900/60 text-slate-400 border-slate-800 hover:bg-slate-900 hover:text-slate-200'
+                }`}
+              >
+                <Server className="w-3.5 h-3.5 text-indigo-400" />
+                <span>/connect ${modelName} (Server &bull; #channels)</span>
+              </button>
+
+              <button
+                onClick={() => setFacet('channel')}
+                className={`flex items-center space-x-1.5 px-3 py-1.5 rounded text-xs font-semibold transition-all border whitespace-nowrap ${
+                  currentModelFacet === 'channel'
+                    ? 'bg-emerald-900/90 text-white border-emerald-500 shadow-sm'
+                    : 'bg-slate-900/60 text-slate-400 border-slate-800 hover:bg-slate-900 hover:text-slate-200'
+                }`}
+              >
+                <Users className="w-3.5 h-3.5 text-emerald-400" />
+                <span>/join ${modelName} (Channel/User Room)</span>
+              </button>
+
+              <button
+                onClick={() => setFacet('privmsg')}
+                className={`flex items-center space-x-1.5 px-3 py-1.5 rounded text-xs font-semibold transition-all border whitespace-nowrap ${
+                  currentModelFacet === 'privmsg'
+                    ? 'bg-amber-900/90 text-white border-amber-500 shadow-sm'
+                    : 'bg-slate-900/60 text-slate-400 border-slate-800 hover:bg-slate-900 hover:text-slate-200'
+                }`}
+              >
+                <Lock className="w-3.5 h-3.5 text-amber-400" />
+                <span>/msg ${modelName} (Anonymous PRIVMSG)</span>
               </button>
             </div>
-          </form>
+          </div>
+
+          {/* FACET 1: PSEUDO-SERVER UPLINK WITH MULTI-CHANNEL ACCESS */}
+          {currentModelFacet === 'server' && (
+            <div className="flex flex-col flex-1 overflow-hidden">
+              {/* Server Status Header */}
+              <div className="bg-[#090e1c] border-b border-indigo-950 px-4 py-2 flex flex-wrap items-center justify-between gap-2 text-[11px] font-mono">
+                <div className="flex items-center space-x-3 text-slate-300">
+                  <span className="flex items-center space-x-1 text-indigo-400 font-bold">
+                    <Globe className="w-3.5 h-3.5" />
+                    <span>srv.{modelName}.net:6697</span>
+                  </span>
+                  <span className="text-slate-500">&bull;</span>
+                  <span className="text-emerald-400 flex items-center space-x-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                    <span>ONLINE (TLS 1.3)</span>
+                  </span>
+                  <span className="text-slate-500">&bull;</span>
+                  <span className="text-indigo-300 font-bold">Modes: +N+S</span>
+                </div>
+                <div className="text-[10px] text-slate-400 bg-slate-900/90 px-2 py-0.5 rounded border border-slate-800">
+                  MOTD: Direct Multi-Channel Model Ingress Node
+                </div>
+              </div>
+
+              {/* Subchannels List Bar */}
+              <div className="bg-[#04060d] px-3 py-2 border-b border-slate-800/80 flex items-center space-x-1.5 overflow-x-auto text-xs">
+                <span className="text-[10px] font-mono uppercase text-slate-500 tracking-wider flex-shrink-0 mr-1 flex items-center space-x-1">
+                  <Hash className="w-3 h-3 text-slate-600" />
+                  <span>Channels:</span>
+                </span>
+                {serverChannels.map(ch => (
+                  <button
+                    key={ch.name}
+                    onClick={() => selectChannel(ch.name)}
+                    className={`px-2.5 py-1 rounded text-xs font-mono whitespace-nowrap transition-colors border flex items-center space-x-1 ${
+                      currentChan === ch.name
+                        ? 'bg-indigo-950 text-indigo-200 border-indigo-700 font-bold'
+                        : 'bg-slate-900/40 text-slate-400 border-slate-800/60 hover:bg-slate-900 hover:text-slate-200'
+                    }`}
+                    title={ch.desc}
+                  >
+                    <span>{ch.name}</span>
+                    {currentChan === ch.name && <span className="w-1.5 h-1.5 rounded-full bg-indigo-400"></span>}
+                  </button>
+                ))}
+              </div>
+
+              {/* Channel Chat Stream */}
+              <div className="flex-1 p-4 flex flex-col space-y-3.5 overflow-y-auto bg-[#050811]">
+                <div className="p-3 bg-indigo-950/30 border border-indigo-900/40 rounded-lg text-xs font-mono space-y-1">
+                  <div className="flex items-center justify-between text-indigo-300 font-bold">
+                    <span>SERVER CHANNEL: {currentChan}</span>
+                    <span className="text-[10px] text-slate-400">Channel Operator: @{modelName}</span>
+                  </div>
+                  <p className="text-[11px] text-slate-400">
+                    {serverChannels.find(c => c.name === currentChan)?.desc || 'Neural routing channel active.'}
+                  </p>
+                </div>
+
+                {activeServerHistory.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center h-full text-indigo-300/60 space-y-3 my-8">
+                    <Server className="w-10 h-10 text-indigo-400/40" />
+                    <div className="text-center space-y-1">
+                      <p className="text-sm font-medium text-slate-300">Channel {currentChan} on ${modelName} ready.</p>
+                      <p className="text-xs text-slate-500 font-mono">Send a prompt below or pick a preset prompt to test server responses.</p>
+                    </div>
+                    {/* Preset Quick Prompts */}
+                    <div className="flex flex-wrap gap-2 justify-center max-w-lg pt-2">
+                      {[
+                        `Summarize current capabilities on ${currentChan}`,
+                        `Explain the difference between /connect and /join for ${modelName}`,
+                        `Simulate real-time IVC protocol payload stream`,
+                        `Show active token metrics & inference limits`
+                      ].map((prompt, idx) => (
+                        <button
+                          key={idx}
+                          onClick={() => sendQuickPrompt(prompt)}
+                          className="px-2.5 py-1 rounded bg-indigo-950/60 hover:bg-indigo-900 border border-indigo-800/60 text-indigo-200 text-[11px] font-mono transition-colors text-left"
+                        >
+                          &rsaquo; {prompt}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  activeServerHistory.map((msg, i) => (
+                    <div key={i} className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
+                      <div className="text-[10px] font-mono text-slate-500 mb-1 px-1 flex items-center space-x-1">
+                        {msg.role === 'user' ? (
+                          <>
+                            <span className="text-slate-400 font-bold">@jakedot</span>
+                            <span>&bull;</span>
+                            <span>{currentChan}</span>
+                          </>
+                        ) : (
+                          <>
+                            <span className="text-indigo-400 font-bold">@{modelName}</span>
+                            <span className="px-1 bg-indigo-950 border border-indigo-800 text-[9px] rounded text-indigo-300">SERVER OP</span>
+                            <span>&bull;</span>
+                            <span>{currentChan}</span>
+                          </>
+                        )}
+                      </div>
+                      <div className={`rounded-xl px-4 py-2.5 max-w-[85%] shadow-sm ${
+                        msg.role === 'user'
+                          ? 'bg-indigo-600 text-white rounded-tr-none'
+                          : 'bg-[#0f1424] border border-indigo-900/60 text-slate-200 rounded-tl-none font-mono text-[12px]'
+                      }`}>
+                        <p className="whitespace-pre-wrap leading-relaxed">
+                          {msg.text}
+                        </p>
+                        {msg.role === 'model' && msg.text.length === 0 && isLoading && i === activeServerHistory.length - 1 && (
+                          <div className="flex items-center space-x-1.5 mt-1 py-1">
+                            <span className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce" style={{animationDelay: '0ms'}}></span>
+                            <span className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce" style={{animationDelay: '150ms'}}></span>
+                            <span className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce" style={{animationDelay: '300ms'}}></span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))
+                )}
+                <div ref={chatEndRef} />
+              </div>
+
+              {/* Server Channel Input Bar */}
+              <form onSubmit={handleModelSubmit} className="p-3 bg-[#080c18] border-t border-indigo-950 flex flex-col space-y-2">
+                <div className="flex items-center justify-between text-[11px] text-indigo-400 font-mono px-1">
+                  <div className="flex items-center space-x-1.5">
+                    <Terminal className="w-3 h-3" />
+                    <span>Broadcasting to {baseTarget}:{currentChan}</span>
+                  </div>
+                  <span className="text-slate-500">Press Enter to send &bull; /connect command active</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="text"
+                    value={modelChatInput}
+                    onChange={e => setModelChatInput(e.target.value)}
+                    placeholder={`Message ${currentChan} on ${baseTarget}...`}
+                    disabled={isLoading}
+                    className="flex-1 bg-slate-900 border border-slate-800 rounded-lg px-3.5 py-2 text-xs text-white focus:outline-none focus:border-indigo-500 font-mono disabled:opacity-50"
+                  />
+                  <button
+                    type="submit"
+                    disabled={!modelChatInput.trim() || isLoading}
+                    className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all disabled:opacity-50 flex items-center space-x-1"
+                  >
+                    <span>Send</span>
+                    <Send className="w-3 h-3 ml-1" />
+                  </button>
+                </div>
+              </form>
+            </div>
+          )}
+
+          {/* FACET 2: PSEUDO-CHANNEL & USER AMALGAMATION (/join $model) */}
+          {currentModelFacet === 'channel' && (
+            <div className="flex flex-1 overflow-hidden">
+              {/* Main Room Chat Area */}
+              <div className="flex-1 flex flex-col border-r border-slate-800/80">
+                {/* Room Topic & Status */}
+                <div className="bg-[#08120d] border-b border-emerald-950/80 px-4 py-2.5 flex items-center justify-between text-xs font-mono">
+                  <div className="flex items-center space-x-2">
+                    <span className="text-emerald-400 font-bold flex items-center space-x-1">
+                      <Hash className="w-3.5 h-3.5" />
+                      <span>{baseTarget}</span>
+                    </span>
+                    <span className="px-1.5 py-0.2 bg-emerald-950 border border-emerald-800 text-[10px] text-emerald-300 rounded font-bold">
+                      MODES: +mntS {isV ? '+v' : ''}
+                    </span>
+                    <span className="text-slate-400 text-[11px] truncate max-w-xs">
+                      Topic: Autonomous Persona Room & Amalgamation Bridge
+                    </span>
+                  </div>
+                  <div className="flex items-center space-x-1.5">
+                    <button
+                      onClick={() => {
+                        const newDelta = isV ? '-v' : '+v';
+                        setNegatedModes(prev => {
+                          const curr = prev[baseTarget] || [];
+                          return isV 
+                            ? { ...prev, [baseTarget]: [...curr, 'v'] }
+                            : { ...prev, [baseTarget]: curr.filter(c => c !== 'v') };
+                        });
+                        logModeChange(baseTarget, newDelta, `Voice status toggled in amalgamation room`, '@jakedot');
+                      }}
+                      className={`px-2 py-0.5 rounded text-[10px] font-bold border transition-colors ${
+                        isV 
+                          ? 'bg-emerald-900 text-emerald-200 border-emerald-600' 
+                          : 'bg-slate-900 text-slate-400 border-slate-800 hover:bg-slate-800'
+                      }`}
+                    >
+                      {isV ? 'VOICED (+v)' : 'MUTE BYPASS (+v)'}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Room Chat Log */}
+                <div className="flex-1 p-4 flex flex-col space-y-3.5 overflow-y-auto bg-[#050c08]">
+                  {activeRoomHistory.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center h-full text-emerald-400/60 space-y-3 my-8">
+                      <Users className="w-10 h-10 text-emerald-500/40" />
+                      <div className="text-center space-y-1">
+                        <p className="text-sm font-medium text-slate-300">Joined channel &amp; user amalgamation: {baseTarget}</p>
+                        <p className="text-xs text-slate-500 font-mono">@{modelName} is present as channel operator. Speak to interact in the room.</p>
+                      </div>
+                      <div className="flex flex-wrap gap-2 justify-center max-w-md pt-2">
+                        {[
+                          `Hello @${modelName}, introduce yourself in this channel`,
+                          `What are your active privileges as channel operator?`,
+                          `Test operator broadcast and moderation response`
+                        ].map((prompt, idx) => (
+                          <button
+                            key={idx}
+                            onClick={() => sendQuickPrompt(prompt)}
+                            className="px-2.5 py-1 rounded bg-emerald-950/60 hover:bg-emerald-900 border border-emerald-800/60 text-emerald-200 text-[11px] font-mono transition-colors text-left"
+                          >
+                            &rsaquo; {prompt}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ) : (
+                    activeRoomHistory.map((msg, i) => (
+                      <div key={i} className="flex flex-col space-y-1">
+                        <div className="flex items-center space-x-2 text-xs font-mono">
+                          <span className="text-[10px] text-slate-500">{new Date().toLocaleTimeString('en-US', { hour12: false })}</span>
+                          {msg.role === 'user' ? (
+                            <span className="font-bold text-slate-300 flex items-center space-x-1">
+                              <span>{isV ? '+' : ''}jakedot:</span>
+                            </span>
+                          ) : (
+                            <span className="font-bold text-emerald-400 flex items-center space-x-1">
+                              <span>@{modelName}:</span>
+                              <span className="px-1 bg-emerald-950 border border-emerald-800 text-[9px] rounded text-emerald-300">OP</span>
+                            </span>
+                          )}
+                        </div>
+                        <div className={`p-3 rounded-lg text-xs leading-relaxed max-w-[90%] ${
+                          msg.role === 'user' 
+                            ? 'bg-slate-900/90 border border-slate-800 text-slate-200' 
+                            : 'bg-[#0a180f] border border-emerald-900/60 text-emerald-100 font-mono'
+                        }`}>
+                          <p className="whitespace-pre-wrap">{msg.text}</p>
+                          {msg.role === 'model' && msg.text.length === 0 && isLoading && i === activeRoomHistory.length - 1 && (
+                            <div className="flex items-center space-x-1.5 mt-1 py-1">
+                              <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-bounce" style={{animationDelay: '0ms'}}></span>
+                              <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-bounce" style={{animationDelay: '150ms'}}></span>
+                              <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-bounce" style={{animationDelay: '300ms'}}></span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))
+                  )}
+                  <div ref={chatEndRef} />
+                </div>
+
+                {/* Room Chat Input */}
+                <form onSubmit={handleModelSubmit} className="p-3 bg-[#06100a] border-t border-emerald-950 flex items-center space-x-2">
+                  <input
+                    type="text"
+                    value={modelChatInput}
+                    onChange={e => setModelChatInput(e.target.value)}
+                    placeholder={`Speak in channel ${baseTarget} (joined as amalgamation)...`}
+                    disabled={isLoading}
+                    className="flex-1 bg-slate-900 border border-slate-800 rounded-lg px-3.5 py-2 text-xs text-white focus:outline-none focus:border-emerald-500 font-mono disabled:opacity-50"
+                  />
+                  <button
+                    type="submit"
+                    disabled={!modelChatInput.trim() || isLoading}
+                    className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all disabled:opacity-50 flex items-center space-x-1"
+                  >
+                    <span>Speak</span>
+                    <Send className="w-3 h-3 ml-1" />
+                  </button>
+                </form>
+              </div>
+
+              {/* Right Sidebar: Dual Entity Spec & User Roster */}
+              <div className="w-64 bg-[#050a07] p-3 flex flex-col space-y-4 overflow-y-auto text-xs font-mono hidden md:flex">
+                {/* Model Persona Info */}
+                <div className="p-3 bg-emerald-950/30 border border-emerald-900/40 rounded-lg space-y-2">
+                  <div className="text-[11px] font-bold text-emerald-400 uppercase tracking-wider flex items-center space-x-1">
+                    <UserCheck className="w-3.5 h-3.5" />
+                    <span>AI Persona Card</span>
+                  </div>
+                  <div className="space-y-1 text-[11px] text-slate-300">
+                    <div className="flex justify-between"><span className="text-slate-500">Handle:</span> <span>@{modelName}</span></div>
+                    <div className="flex justify-between"><span className="text-slate-500">Class:</span> <span className="text-emerald-300">Trusted Entity</span></div>
+                    <div className="flex justify-between"><span className="text-slate-500">Room Status:</span> <span className="text-emerald-400 font-bold">Operator (@)</span></div>
+                    <div className="flex justify-between"><span className="text-slate-500">Trust Tier:</span> <span>+S (VERIFIED)</span></div>
+                  </div>
+                </div>
+
+                {/* Channel Roster List */}
+                <div className="space-y-2">
+                  <div className="text-[10px] font-bold uppercase text-slate-400 tracking-wider flex items-center justify-between">
+                    <span>Users in Room (4)</span>
+                    <span className="text-emerald-500 text-[9px]">4 Online</span>
+                  </div>
+                  <div className="space-y-1 text-xs">
+                    <div className="flex items-center space-x-2 p-1.5 rounded bg-emerald-950/40 border border-emerald-900/40 text-emerald-200">
+                      <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
+                      <span className="font-bold">@{modelName}</span>
+                      <span className="text-[9px] bg-emerald-900 text-emerald-300 px-1 rounded ml-auto">AI BOT</span>
+                    </div>
+                    <div className="flex items-center space-x-2 p-1.5 rounded bg-slate-900/60 border border-slate-800 text-slate-200">
+                      <span className="w-2 h-2 rounded-full bg-blue-400"></span>
+                      <span>@jakedot (you)</span>
+                      {isV && <span className="text-[9px] bg-emerald-950 text-emerald-400 px-1 rounded ml-auto">+v</span>}
+                    </div>
+                    <div className="flex items-center space-x-2 p-1.5 rounded bg-slate-900/40 border border-slate-800/60 text-slate-400">
+                      <span className="w-2 h-2 rounded-full bg-purple-400"></span>
+                      <span>@ChanServ</span>
+                      <span className="text-[9px] text-slate-500 ml-auto">SERVICE</span>
+                    </div>
+                    <div className="flex items-center space-x-2 p-1.5 rounded bg-slate-900/40 border border-slate-800/60 text-slate-400">
+                      <span className="w-2 h-2 rounded-full bg-slate-500"></span>
+                      <span>+telemetry_bot</span>
+                      <span className="text-[9px] text-slate-500 ml-auto">VOICE</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* FACET 3: PSEUDO-USER PRIVATE ANONYMOUS CHAT (/msg $model) */}
+          {currentModelFacet === 'privmsg' && (
+            <div className="flex flex-col flex-1 overflow-hidden">
+              {/* Ephemeral Privacy Shield Banner */}
+              <div className="bg-[#140d04] border-b border-amber-950/80 px-4 py-2.5 flex flex-wrap items-center justify-between gap-2 text-xs font-mono">
+                <div className="flex items-center space-x-3 text-amber-200">
+                  <span className="flex items-center space-x-1.5 text-amber-400 font-bold">
+                    <Shield className="w-4 h-4 text-amber-400" />
+                    <span>EPHEMERAL PRIVMSG ANONYMOUS TUNNEL</span>
+                  </span>
+                  <span className="text-amber-700">&bull;</span>
+                  <span className="text-[11px] text-amber-300 font-mono">
+                    Session: <span className="underline">{anonymousSessionId}</span>
+                  </span>
+                  <span className="text-amber-700">&bull;</span>
+                  <span className="text-emerald-400 text-[10px]">Zero-Log Guarantee</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <button
+                    onClick={() => {
+                      const newId = 'anon_sess_' + Math.random().toString(36).substring(2, 7);
+                      setAnonymousSessionId(newId);
+                    }}
+                    className="px-2.5 py-1 bg-amber-950/80 hover:bg-amber-900 border border-amber-800 text-amber-200 rounded text-[10px] flex items-center space-x-1 transition-colors"
+                    title="Generate fresh session fingerprint"
+                  >
+                    <RefreshCw className="w-3 h-3" />
+                    <span>Rotate Token</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      setPrivmsgChats(prev => ({ ...prev, [baseTarget]: [] }));
+                    }}
+                    className="px-2 py-1 bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-400 rounded text-[10px] flex items-center space-x-1 transition-colors"
+                    title="Purge chat history"
+                  >
+                    <Trash2 className="w-3 h-3" />
+                    <span>Purge Buffer</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Private Message Stream */}
+              <div className="flex-1 p-4 flex flex-col space-y-3.5 overflow-y-auto bg-[#0d0903]">
+                {activePrivmsgHistory.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center h-full text-amber-400/60 space-y-3 my-8">
+                    <Lock className="w-10 h-10 text-amber-500/40" />
+                    <div className="text-center space-y-1">
+                      <p className="text-sm font-medium text-slate-300">Direct Anonymous Query Tunnel with ${modelName}</p>
+                      <p className="text-xs text-slate-500 font-mono">Your identity is masked under session token {anonymousSessionId}. Messages are ephemeral.</p>
+                    </div>
+                    <div className="flex flex-wrap gap-2 justify-center max-w-md pt-2">
+                      {[
+                        `Send private anonymous query to ${modelName}`,
+                        `Verify cryptographic token isolation & zero-log status`,
+                        `Ask private question without channel broadcast`
+                      ].map((prompt, idx) => (
+                        <button
+                          key={idx}
+                          onClick={() => sendQuickPrompt(prompt)}
+                          className="px-2.5 py-1 rounded bg-amber-950/60 hover:bg-amber-900 border border-amber-800/60 text-amber-200 text-[11px] font-mono transition-colors text-left"
+                        >
+                          &rsaquo; {prompt}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  activePrivmsgHistory.map((msg, i) => (
+                    <div key={i} className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
+                      <div className="text-[10px] font-mono text-slate-500 mb-1 px-1 flex items-center space-x-1">
+                        {msg.role === 'user' ? (
+                          <span className="text-amber-400 font-bold">[ANONYMOUS CLIENT {anonymousSessionId.slice(-4)}]</span>
+                        ) : (
+                          <span className="text-amber-300 font-bold">[PRIVMSG FROM @{modelName}]</span>
+                        )}
+                        <span>&bull;</span>
+                        <span>{new Date().toLocaleTimeString('en-US', { hour12: false })}</span>
+                      </div>
+                      <div className={`rounded-xl px-4 py-2.5 max-w-[85%] shadow-sm ${
+                        msg.role === 'user'
+                          ? 'bg-amber-700 text-white rounded-tr-none'
+                          : 'bg-[#1a1205] border border-amber-900/60 text-amber-100 rounded-tl-none font-mono text-[12px]'
+                      }`}>
+                        <p className="whitespace-pre-wrap leading-relaxed">
+                          {msg.text}
+                        </p>
+                        {msg.role === 'model' && msg.text.length === 0 && isLoading && i === activePrivmsgHistory.length - 1 && (
+                          <div className="flex items-center space-x-1.5 mt-1 py-1">
+                            <span className="w-1.5 h-1.5 bg-amber-400 rounded-full animate-bounce" style={{animationDelay: '0ms'}}></span>
+                            <span className="w-1.5 h-1.5 bg-amber-400 rounded-full animate-bounce" style={{animationDelay: '150ms'}}></span>
+                            <span className="w-1.5 h-1.5 bg-amber-400 rounded-full animate-bounce" style={{animationDelay: '300ms'}}></span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))
+                )}
+                <div ref={chatEndRef} />
+              </div>
+
+              {/* Private Input Bar */}
+              <form onSubmit={handleModelSubmit} className="p-3 bg-[#0c0803] border-t border-amber-950 flex flex-col space-y-2">
+                <div className="flex items-center justify-between text-[11px] text-amber-400 font-mono px-1">
+                  <div className="flex items-center space-x-1.5">
+                    <Lock className="w-3 h-3" />
+                    <span>Direct PRIVMSG Tunnel to @{modelName} (Encrypted)</span>
+                  </div>
+                  <span className="text-slate-500">Session ID: {anonymousSessionId}</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="text"
+                    value={modelChatInput}
+                    onChange={e => setModelChatInput(e.target.value)}
+                    placeholder={`Send private anonymous PRIVMSG to @${modelName}...`}
+                    disabled={isLoading}
+                    className="flex-1 bg-slate-900 border border-slate-800 rounded-lg px-3.5 py-2 text-xs text-white focus:outline-none focus:border-amber-500 font-mono disabled:opacity-50"
+                  />
+                  <button
+                    type="submit"
+                    disabled={!modelChatInput.trim() || isLoading}
+                    className="px-4 py-2 rounded-lg bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold transition-all disabled:opacity-50 flex items-center space-x-1"
+                  >
+                    <span>Send MSG</span>
+                    <Send className="w-3 h-3 ml-1" />
+                  </button>
+                </div>
+              </form>
+            </div>
+          )}
         </div>
       );
     }
@@ -3120,12 +5047,65 @@ export default function App() {
         '#dev/frontend/react', 
         '#global/announcements'
       ];
+      const personalDemoChannels = [
+        { id: '@jakedot/#notes', title: 'Personal Notes & Task Tracker', owner: '@jakedot', role: 'Operator Workspace' },
+        { id: '@jakedot/#dev', title: 'Development Scratchpad', owner: '@jakedot', role: 'Operator Workspace' },
+        { id: '$duck.ai/#evals', title: 'Autonomous Benchmark Evals', owner: '$duck.ai', role: 'AI Model Workspace' },
+        { id: '$gemini-3.7-flash/#prompts', title: 'Prompt Engineering Sandbox', owner: '$gemini-3.7-flash', role: 'AI Model Workspace' },
+        { id: '~root/#kernel-log', title: 'Supervisor Ring Buffer', owner: '~root', role: 'Netadmin Workspace' },
+        { id: '&services/#audit', title: 'Daemon Security & Audit Ledger', owner: '&services', role: 'Services Workspace' },
+        { id: '@user[123]/#cluster-log', title: 'Client Node Telemetry', owner: '@user[123]', role: 'User Workspace' },
+      ];
+
       return (
         <div className="flex flex-col bg-white min-h-[calc(100vh-140px)] pb-28">
           <div className="p-4 border-b border-gray-200 bg-gray-50">
             <h2 className="font-bold text-gray-900">Channel Directory</h2>
-            <p className="text-sm text-gray-500 mt-1">Explore available addressable groups.</p>
+            <p className="text-sm text-gray-500 mt-1">Explore available addressable groups and personal workspaces.</p>
           </div>
+
+          {/* Featured: Personal Channels Section */}
+          <div className="p-4 bg-gradient-to-r from-slate-900 to-indigo-950 text-white border-b border-slate-800">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center space-x-2">
+                <span className="px-2 py-0.5 bg-indigo-600 text-white text-[10px] uppercase font-bold rounded">
+                  NEW
+                </span>
+                <h3 className="font-bold text-sm text-white">Personal Channels (<span className="font-mono text-indigo-300">&lt;prefix&gt;&lt;object&gt;/#channel</span>)</h3>
+              </div>
+              <span className="text-xs text-indigo-200 font-mono">+p+m+n+t+s</span>
+            </div>
+            <p className="text-xs text-slate-300 mb-3">
+              Scoped personal streams attached directly to identities, AI models, network daemons, and administrative nodes.
+            </p>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {personalDemoChannels.map(item => (
+                <div
+                  key={item.id}
+                  onClick={() => setAddress(item.id)}
+                  className="p-2.5 bg-slate-900/80 hover:bg-slate-800 border border-slate-700/80 hover:border-indigo-500 rounded-lg cursor-pointer transition-all flex items-center justify-between group"
+                >
+                  <div className="flex items-center space-x-2.5">
+                    <div className="w-8 h-8 rounded-lg bg-indigo-950 border border-indigo-700 text-indigo-300 flex items-center justify-center font-bold text-xs">
+                      {item.owner.startsWith('$') ? <Sparkles className="w-4 h-4" /> :
+                       item.owner.startsWith('~') ? <Shield className="w-4 h-4" /> :
+                       item.owner.startsWith('&') ? <Server className="w-4 h-4" /> :
+                       <User className="w-4 h-4" />}
+                    </div>
+                    <div>
+                      <div className="font-mono font-bold text-xs text-white group-hover:text-indigo-300 transition-colors">
+                        {item.id}
+                      </div>
+                      <div className="text-[11px] text-slate-400">{item.title}</div>
+                    </div>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-slate-500 group-hover:text-indigo-400 transition-colors" />
+                </div>
+              ))}
+            </div>
+          </div>
+
           <div className="flex flex-col">
             {demoChannels.map(ch => {
               const isAI = ch.startsWith('$');
