@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Home, Search, Bell, Menu, User, MessageSquare, Heart, Share2, MoreHorizontal, GitCommit, Code, Terminal, Send, Hash, ChevronRight, Folder, Bookmark, EyeOff, Ban, Server, Activity, PlaySquare, Sparkles, Settings, Database, ShieldCheck, ShieldAlert, Cpu, Coins, Layers, Zap, Workflow, Binary, GitFork, Gauge, Radio, Volume2, Mic, CheckCircle2, Sliders, SlidersHorizontal, RotateCcw, Check, Copy, Plus, Minus, ArrowRight, Shield, Info, History, Clock, UserCheck, Filter, Users, Lock, RefreshCw, Trash2, Globe, Key, Pin, Edit3, ExternalLink, FileText, GitCompare, Table, FileCode, Braces, Split, Network, CornerDownRight } from 'lucide-react';
+import { Home, Search, Bell, Menu, User, MessageSquare, Heart, Share2, MoreHorizontal, GitCommit, Code, Terminal, Send, Hash, ChevronRight, Folder, Bookmark, EyeOff, Ban, Server, Activity, PlaySquare, Sparkles, Settings, Database, ShieldCheck, ShieldAlert, Cpu, Coins, Layers, Zap, Workflow, Binary, GitFork, Gauge, Radio, Volume2, Mic, CheckCircle2, Sliders, SlidersHorizontal, RotateCcw, Check, Copy, Plus, Minus, ArrowRight, Shield, Info, History, Clock, UserCheck, Filter, Users, Lock, RefreshCw, Trash2, Globe, Key, Pin, Edit3, Edit2, ExternalLink, FileText, GitCompare, Table, FileCode, Braces, Split, Network, CornerDownRight, X, FolderTree, FileDiff } from 'lucide-react';
 
 interface PrefixDescriptor {
   prefix: string;
@@ -1005,6 +1005,8 @@ export default function App() {
     } else if (trimmed === '/model') {
       setAddress(`${baseTarget}+model`);
       setDeltaViewTab('model');
+    } else if (trimmed === '/docs' || trimmed === '/api/docs' || trimmed === '/docs/modes') {
+      window.open('/api/docs/modes', '_blank');
     }
     setCommandInput('');
   };
@@ -2029,12 +2031,23 @@ export default function App() {
                 </div>
               </div>
 
-              <button
-                onClick={() => setAddress(activeBase)}
-                className="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-600 rounded text-xs font-bold transition-colors flex items-center space-x-1"
-              >
-                <span>Exit Δmodes</span>
-              </button>
+              <div className="flex items-center space-x-2">
+                <a
+                  href="/api/docs/modes"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-2.5 py-1.5 bg-indigo-950 hover:bg-indigo-900 text-indigo-300 border border-indigo-700 rounded text-xs font-bold transition-colors flex items-center space-x-1"
+                >
+                  <FileText className="w-3.5 h-3.5 text-indigo-400" />
+                  <span>API Docs (HTML)</span>
+                </a>
+                <button
+                  onClick={() => setAddress(activeBase)}
+                  className="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-600 rounded text-xs font-bold transition-colors flex items-center space-x-1"
+                >
+                  <span>Exit Δmodes</span>
+                </button>
+              </div>
             </div>
 
             {/* Quick Object Switcher */}
@@ -3116,7 +3129,7 @@ export default function App() {
                                 key: newPropKey.trim(),
                                 value: finalVal,
                                 type: newPropType,
-                                origin: 'DYNAMIC_CUSTOM',
+                                origin: 'DYNAMIC_DELTA',
                                 description: 'User-defined dynamic property',
                                 updatedAt: new Date().toLocaleTimeString('en-US', { hour12: false })
                               });
