@@ -351,6 +351,16 @@ async function startServer() {
   // AI Chat Route
   app.post("/api/chat", async (req, res) => {
     try {
+      if (!req.body || typeof req.body !== 'object') {
+        return res.status(400).json({ error: "Invalid request body" });
+      }
+      if (req.body.model !== undefined && typeof req.body.model !== 'string') {
+        return res.status(400).json({ error: "Invalid model format" });
+      }
+      if (req.body.message !== undefined && typeof req.body.message !== 'string') {
+        return res.status(400).json({ error: "Invalid message format" });
+      }
+
       const { model, message, history, contextType, channelName, anonymousSessionId } = req.body;
       const cleanModel = (model || "gemini-3.7-flash").replace(/^\$/, "");
 
@@ -430,8 +440,8 @@ async function startServer() {
       res.write("data: [DONE]\n\n");
       res.end();
     } catch (error: any) {
-      console.error(error);
-      res.status(500).json({ error: error.message || "Failed to communicate with AI model" });
+      console.error("Operation failed", error);
+      res.status(500).json({ error: "Failed to communicate with AI model" });
     }
   });
 
