@@ -676,21 +676,19 @@ export default function App() {
   }, []);
 
   // Sync to local storage
-  useEffect(() => {
-    localStorage.setItem('lite_bookmarks', JSON.stringify(bookmarks));
-    localStorage.setItem('lite_likes', JSON.stringify(likes));
-    localStorage.setItem('lite_ignored', JSON.stringify(ignored));
-    localStorage.setItem('lite_banned', JSON.stringify(banned));
-    localStorage.setItem('lite_modelChats', JSON.stringify(modelChats));
-    localStorage.setItem('lite_serverChats', JSON.stringify(serverChats));
-    localStorage.setItem('lite_roomChats', JSON.stringify(roomChats));
-    localStorage.setItem('lite_privmsgChats', JSON.stringify(privmsgChats));
-    localStorage.setItem('lite_activeServerChannel', JSON.stringify(activeServerChannel));
-    localStorage.setItem('lite_negatedModes', JSON.stringify(negatedModes));
-    localStorage.setItem('lite_personal_channels', JSON.stringify(personalChannels));
-    localStorage.setItem('lite_personal_topics', JSON.stringify(personalTopics));
-    localStorage.setItem('lite_object_props', JSON.stringify(objectPropsStore));
-  }, [bookmarks, likes, ignored, banned, modelChats, serverChats, roomChats, privmsgChats, activeServerChannel, negatedModes, personalChannels, personalTopics, objectPropsStore]);
+  useEffect(() => { localStorage.setItem('lite_bookmarks', JSON.stringify(bookmarks)); }, [bookmarks]);
+  useEffect(() => { localStorage.setItem('lite_likes', JSON.stringify(likes)); }, [likes]);
+  useEffect(() => { localStorage.setItem('lite_ignored', JSON.stringify(ignored)); }, [ignored]);
+  useEffect(() => { localStorage.setItem('lite_banned', JSON.stringify(banned)); }, [banned]);
+  useEffect(() => { localStorage.setItem('lite_modelChats', JSON.stringify(modelChats)); }, [modelChats]);
+  useEffect(() => { localStorage.setItem('lite_serverChats', JSON.stringify(serverChats)); }, [serverChats]);
+  useEffect(() => { localStorage.setItem('lite_roomChats', JSON.stringify(roomChats)); }, [roomChats]);
+  useEffect(() => { localStorage.setItem('lite_privmsgChats', JSON.stringify(privmsgChats)); }, [privmsgChats]);
+  useEffect(() => { localStorage.setItem('lite_activeServerChannel', JSON.stringify(activeServerChannel)); }, [activeServerChannel]);
+  useEffect(() => { localStorage.setItem('lite_negatedModes', JSON.stringify(negatedModes)); }, [negatedModes]);
+  useEffect(() => { localStorage.setItem('lite_personal_channels', JSON.stringify(personalChannels)); }, [personalChannels]);
+  useEffect(() => { localStorage.setItem('lite_personal_topics', JSON.stringify(personalTopics)); }, [personalTopics]);
+  useEffect(() => { localStorage.setItem('lite_object_props', JSON.stringify(objectPropsStore)); }, [objectPropsStore]);
 
   // Parse addressing structure (e.g. @user+pm, #group/subgroup/channel+raw, ivc://host/#feed/&config, §config, ?probe, etc.)
   let rawAddress = address;
