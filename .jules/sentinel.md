@@ -1,4 +1,4 @@
-## 2025-03-08 - Fix Missing Input Validation & Secure Error Messages
-**Vulnerability:** The `/api/chat` endpoint lacked input validation for `req.body`, `model`, and `message`, making it susceptible to DoS attacks via type confusion (e.g., passing a number causing `.replace` to throw a `TypeError`). Additionally, the catch block returned raw `error.message` strings to the client.
-**Learning:** Missing basic type checking on external input and returning detailed error strings can lead to application crashes and potential leakage of internal system details.
-**Prevention:** Always validate the existence and types of expected input properties before operating on them, and consistently return sanitized, generic error messages for server faults.
+## 2025-03-01 - [Missing Rate Limiting on LLM Endpoint]
+**Vulnerability:** Missing rate limiting on the `/api/chat` route in `server.ts`.
+**Learning:** The Express backend consumes a third-party GenAI API, which is susceptible to resource exhaustion or financial DoS if left open without rate controls.
+**Prevention:** Implement endpoint-specific rate limiting (using Maps with periodic cleanup or Redis) for any endpoints interacting with expensive resources (APIs, LLMs, DB-heavy tasks).
