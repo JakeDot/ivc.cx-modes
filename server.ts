@@ -4,6 +4,21 @@ import { createServer as createViteServer } from "vite";
 import { GoogleGenAI, GenerateContentResponse } from "@google/genai";
 import cors from "cors";
 
+// 🛡️ Security Enhancement: Rate limiting to prevent DoS and API quota exhaustion
+const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
+const RATE_LIMIT_WINDOW_MS = 60 * 1000; // 1 minute
+const MAX_REQUESTS_PER_WINDOW = 30;
+
+// Cleanup interval for rate limiter to prevent memory leaks
+setInterval(() => {
+  const now = Date.now();
+  for (const [ip, data] of rateLimitMap.entries()) {
+    if (now > data.resetTime) {
+      rateLimitMap.delete(ip);
+    }
+  }
+}, RATE_LIMIT_WINDOW_MS);
+
 async function startServer() {
   const app = express();
   const PORT = 3000;
@@ -350,6 +365,24 @@ async function startServer() {
 
   // AI Chat Route
   app.post("/api/chat", async (req, res) => {
+    // 🛡️ Security Enhancement: Apply rate limiting to sensitive endpoints
+    const ip = req.ip || req.socket.remoteAddress || 'unknown';
+    const now = Date.now();
+    const rateData = rateLimitMap.get(ip) || { count: 0, resetTime: now + RATE_LIMIT_WINDOW_MS };
+
+    if (now > rateData.resetTime) {
+      rateData.count = 1;
+      rateData.resetTime = now + RATE_LIMIT_WINDOW_MS;
+    } else {
+      rateData.count++;
+    }
+
+    rateLimitMap.set(ip, rateData);
+
+    if (rateData.count > MAX_REQUESTS_PER_WINDOW) {
+      return res.status(429).json({ error: "Too many requests, please try again later." });
+    }
+
     try {
       if (!req.body || typeof req.body !== 'object') {
         return res.status(400).json({ error: "Invalid request body" });
