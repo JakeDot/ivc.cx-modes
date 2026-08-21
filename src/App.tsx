@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Home, Search, Bell, Menu, User, MessageSquare, Heart, Share2, MoreHorizontal, GitCommit, Code, Terminal, Send, Hash, ChevronRight, Folder, Bookmark, EyeOff, Ban, Server, Activity, PlaySquare, Sparkles, Settings, Database, ShieldCheck, ShieldAlert, Cpu, Coins, Layers, Zap, Workflow, Binary, GitFork, Gauge, Radio, Volume2, Mic, CheckCircle2, Sliders, SlidersHorizontal, RotateCcw, Check, Copy, Plus, Minus, ArrowRight, Shield, Info, History, Clock, UserCheck, Filter, Users, Lock, RefreshCw, Trash2, Globe, Key, Pin, Edit3, Edit2, ExternalLink, FileText, GitCompare, Table, FileCode, Braces, Split, Network, CornerDownRight, X, FolderTree, FileDiff } from 'lucide-react';
 
 interface PrefixDescriptor {
@@ -846,6 +846,12 @@ export default function App() {
   const isO = hasMode('o', 'oper') || hasMode('o', 'opers') || isOpersEvent || (defaultO && !targetNegated.includes('o'));
   const isMuted = hasMode('m', 'muted') || isOpersEvent;
   const isA = hasMode('a', 'admin') || isOpersEvent || (defaultA && !targetNegated.includes('a'));
+
+  // Memoize visible posts to prevent expensive array filtering on every render
+  const visiblePostsMemo = useMemo(() => {
+    const sourcePosts = baseTarget === '#feed' ? posts : ivcPosts.filter(p => p.handle === baseTarget);
+    return sourcePosts.filter(p => !ignored.includes(p.handle) && !banned.includes(p.handle));
+  }, [baseTarget, posts, ivcPosts, ignored, banned]);
 
   // Scroll to bottom of chat when it updates
   useEffect(() => {
@@ -5525,10 +5531,6 @@ BLOCK_SEXUALLY_EXPLICIT=HIGH</pre>
 
     // 4. CHANNEL RENDERING (Default #feed, IVC modules)
     if (baseTarget.startsWith('#') && baseTarget !== '#users' && baseTarget !== '#channels') {
-      // Filter out ignored and banned users
-      const sourcePosts = baseTarget === '#feed' ? posts : ivcPosts.filter(p => p.handle === baseTarget);
-      const visiblePosts = sourcePosts.filter(p => !ignored.includes(p.handle) && !banned.includes(p.handle));
-      
       return (
         <div className="flex flex-col pb-28">
           {/* Muted Channel (+m) & Voice (+v) Override Banner */}
@@ -5602,13 +5604,13 @@ BLOCK_SEXUALLY_EXPLICIT=HIGH</pre>
               </button>
             </div>
           )}
-          {visiblePosts.length === 0 && baseTarget !== '#feed' ? (
+          {visiblePostsMemo.length === 0 && baseTarget !== '#feed' ? (
             <div className="p-8 text-center text-gray-500 flex flex-col items-center justify-center">
               <Server className="w-8 h-8 text-gray-300 mb-2" />
               <p>No IVC module data loaded from repository.</p>
             </div>
           ) : (
-            visiblePosts.map(post => renderPost(post))
+            visiblePostsMemo.map(post => renderPost(post))
           )}
         </div>
       );
