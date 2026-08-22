@@ -26,6 +26,15 @@ async function startServer() {
   app.use(express.json());
   app.use(cors());
 
+  // 🛡️ Security Enhancement: Add security headers
+  app.use((req, res, next) => {
+    res.setHeader("X-Content-Type-Options", "nosniff");
+    res.setHeader("X-Frame-Options", "DENY");
+    res.setHeader("X-XSS-Protection", "1; mode=block");
+    res.setHeader("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
+    next();
+  });
+
   // Modes Model API Documentation Route (HTML Content-Type)
   const modesApiDocsHandler = (req: express.Request, res: express.Response) => {
     res.setHeader("Content-Type", "text/html; charset=utf-8");
@@ -392,6 +401,11 @@ async function startServer() {
       }
       if (req.body.message !== undefined && typeof req.body.message !== 'string') {
         return res.status(400).json({ error: "Invalid message format" });
+      }
+
+      // 🛡️ Security Enhancement: Input length validation (DoS risk mitigation)
+      if (typeof req.body.message === 'string' && req.body.message.length > 4000) {
+        return res.status(413).json({ error: "Message too long. Maximum allowed length is 4000 characters." });
       }
 
       const { model, message, history, contextType, channelName, anonymousSessionId } = req.body;
