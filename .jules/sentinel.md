@@ -1,4 +1,4 @@
-## 2025-03-01 - [Missing Rate Limiting on LLM Endpoint]
-**Vulnerability:** Missing rate limiting on the `/api/chat` route in `server.ts`.
-**Learning:** The Express backend consumes a third-party GenAI API, which is susceptible to resource exhaustion or financial DoS if left open without rate controls.
-**Prevention:** Implement endpoint-specific rate limiting (using Maps with periodic cleanup or Redis) for any endpoints interacting with expensive resources (APIs, LLMs, DB-heavy tasks).
+## 2025-03-09 - [Missing Security Headers and Input Length Validation]
+**Vulnerability:** [The application lacked basic security headers (CSP, X-Frame-Options) and the `/api/chat` endpoint did not enforce any length limits on the `message` input, opening it to DoS attacks.]
+**Learning:** [These basic protections were likely missed during initial development when the focus was on core functionality and prototyping.]
+**Prevention:** [Implement a robust baseline of security headers (like Helmet or manual injection) and enforce input size bounds directly at API boundaries.]

@@ -26,6 +26,14 @@ async function startServer() {
   app.use(express.json());
   app.use(cors());
 
+  // 🛡️ Security Enhancement: Add security headers to prevent common attacks
+  app.use((req, res, next) => {
+    res.setHeader("X-Content-Type-Options", "nosniff");
+    res.setHeader("X-Frame-Options", "DENY");
+    res.setHeader("X-XSS-Protection", "1; mode=block");
+    next();
+  });
+
   // Modes Model API Documentation Route (HTML Content-Type)
   const modesApiDocsHandler = (req: express.Request, res: express.Response) => {
     res.setHeader("Content-Type", "text/html; charset=utf-8");
@@ -392,6 +400,9 @@ async function startServer() {
       }
       if (req.body.message !== undefined && typeof req.body.message !== 'string') {
         return res.status(400).json({ error: "Invalid message format" });
+      }
+      if (req.body.message && req.body.message.length > 4000) {
+        return res.status(400).json({ error: "Message exceeds maximum allowed length" });
       }
 
       const { model, message, history, contextType, channelName, anonymousSessionId } = req.body;
