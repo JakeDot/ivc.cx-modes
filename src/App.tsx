@@ -881,6 +881,142 @@ export default function App() {
     return sourcePosts.filter(p => !ignored.includes(p.handle) && !banned.includes(p.handle));
   }, [baseTarget, posts, ivcPosts, ignored, banned]);
 
+
+  // ⚡ Bolt Optimization: Memoized TargetProps and TargetSubObjects to avoid redundant object generation and search filtering on every render tick
+  const filteredTargetPropsMemo = useMemo(() => {
+    const props = getObjectProps(baseTarget);
+    if (!propsSearchFilter) return props;
+    const lowerFilter = propsSearchFilter.toLowerCase();
+    return props.filter(p => p.key.toLowerCase().includes(lowerFilter));
+  }, [baseTarget, propsSearchFilter, objectPropsStore]);
+
+
+  const allModeDefinitionsMemo = useMemo(() => {
+    // 0. ΔMODES VIEW: Object Mode Configuration & Inheritance Matrix
+    const activeBase = (baseTarget === 'Δmodes' || baseTarget === '#Δmodes' || baseTarget === 'modes') ? '#feed' : baseTarget;
+    const targetNegs = negatedModes[activeBase] || [];
+
+    const defaultO = activeBase.startsWith('$') || activeBase.startsWith('|') || activeBase.startsWith('@');
+    const defaultA = activeBase.startsWith('$@') || activeBase.startsWith('|');
+    const defaultN = activeBase.startsWith('~');
+    const defaultCapN = activeBase.startsWith('&') || activeBase === '#network';
+    const defaultCapS = activeBase.startsWith('$') || activeBase.startsWith('[') || activeBase.startsWith('&') || activeBase.startsWith('@');
+
+    return [
+      {
+        flag: 'm',
+        name: 'Channel Muted / Moderated',
+        category: 'channel',
+        desc: 'Restricts channel transmissions to voiced users (+v) and operators (+o).',
+        active: derivedState.isMuted,
+        inherited: derivedState.isOpersEvent,
+        inheritedSource: derivedState.isOpersEvent ? '§opers event session' : undefined,
+        negated: targetNegs.includes('m')
+      },
+      {
+        flag: 'v',
+        name: 'Voice & Broadcast Override',
+        category: 'channel',
+        desc: 'Grants speaking permission in muted (+m) channels, or sets unrestricted mode on #chan+v.',
+        active: derivedState.isV,
+        inherited: false,
+        inheritedSource: undefined,
+        negated: targetNegs.includes('v')
+      },
+      {
+        flag: 'o',
+        name: 'Channel Operator Privileges',
+        category: 'channel',
+        desc: 'Grants channel management rights, kick/ban capabilities, and bypasses channel restrictions.',
+        active: derivedState.isO,
+        inherited: Boolean(defaultO || derivedState.isOpersEvent),
+        inheritedSource: defaultO ? 'Object Prefix ($ or |)' : derivedState.isOpersEvent ? 'Operator Event Bus' : undefined,
+        negated: targetNegs.includes('o')
+      },
+      {
+        flag: 'a',
+        name: 'Channel Administrator',
+        category: 'channel',
+        desc: 'Highest channel administrative authority and governance.',
+        active: derivedState.isA,
+        inherited: Boolean(defaultA || derivedState.isOpersEvent),
+        inheritedSource: defaultA ? 'Object Prefix ($@ or |)' : derivedState.isOpersEvent ? 'Operator Event Bus' : undefined,
+        negated: targetNegs.includes('a')
+      },
+      {
+        flag: 'k',
+        name: 'Kernel Ring-0 Sandbox',
+        category: 'diagnostic',
+        desc: 'Enables direct low-level kernel diagnostics, register inspection, and page table view.',
+        active: derivedState.isK,
+        inherited: false,
+        inheritedSource: undefined,
+        negated: targetNegs.includes('k')
+      },
+      {
+        flag: 't',
+        name: 'Trace Telemetry Stream',
+        category: 'diagnostic',
+        desc: 'Captures real-time state transitions, message packets, and event dispatch telemetry.',
+        active: derivedState.isT,
+        inherited: Boolean(derivedState.isInheritedT),
+        inheritedSource: derivedState.isInheritedT ? 'Diagnostic Probe (?*) Scope' : undefined,
+        negated: targetNegs.includes('t')
+      },
+      {
+        flag: 'n',
+        name: 'Netadmin Superuser Only',
+        category: 'network',
+        desc: 'Restricts object interaction exclusively to verified network administrators.',
+        active: derivedState.isN,
+        inherited: Boolean(defaultN || derivedState.isOpersEvent),
+        inheritedSource: defaultN ? 'Superuser Scope (~root)' : undefined,
+        negated: targetNegs.includes('n')
+      },
+      {
+        flag: 'N',
+        name: 'Network Services Daemon',
+        category: 'network',
+        desc: 'Enables network services (NickServ, ChanServ, OperServ) daemon bindings.',
+        active: derivedState.isCapN,
+        inherited: Boolean(defaultCapN),
+        inheritedSource: defaultCapN ? '&services or #network cluster' : undefined,
+        negated: targetNegs.includes('N')
+      },
+      {
+        flag: 'S',
+        name: 'Trusted External Service',
+        category: 'security',
+        desc: 'Verified trusted service tier. Auto-applied to $ai.model and [$@&] objects.',
+        active: derivedState.isCapS,
+        inherited: Boolean(defaultCapS),
+        inheritedSource: defaultCapS ? 'Auto-applied (AI model / [$@&] scope)' : undefined,
+        negated: targetNegs.includes('S')
+      },
+      {
+        flag: 's',
+        name: 'Untrusted Origin / Remote',
+        category: 'security',
+        desc: 'Untrusted client stream flag. Auto-applied unless +S is present.',
+        active: derivedState.isSmallS,
+        inherited: false,
+        inheritedSource: undefined,
+        negated: targetNegs.includes('s')
+      }
+    ];
+  }, [baseTarget, negatedModes, derivedState]);
+
+  const activeModeDefinitionsMemo = useMemo(() => {
+    return allModeDefinitionsMemo.filter(m => m.active && !m.negated).map(m => `+${m.flag}`).join('');
+  }, [allModeDefinitionsMemo]);
+
+  const filteredTargetSubObjectsMemo = useMemo(() => {
+    const subs = getGeneratedSubObjects(baseTarget);
+    if (!subObjectSearchFilter) return subs;
+    const lowerFilter = subObjectSearchFilter.toLowerCase();
+    return subs.filter(s => s.path.toLowerCase().includes(lowerFilter) || s.description.toLowerCase().includes(lowerFilter));
+  }, [baseTarget, subObjectSearchFilter]);
+
   // Scroll to bottom of chat when it updates
   useEffect(() => {
     if (baseTarget.startsWith('$') && chatEndRef.current) {
@@ -1855,109 +1991,7 @@ export default function App() {
         parentDescription = `Inherent to ${matchedPrefixDescriptor.name} registry.`;
       }
 
-      // Mode matrix definitions
-      const allModeDefinitions = [
-        {
-          flag: 'm',
-          name: 'Channel Muted / Moderated',
-          category: 'channel',
-          desc: 'Restricts channel transmissions to voiced users (+v) and operators (+o).',
-          active: isMuted,
-          inherited: isOpersEvent,
-          inheritedSource: isOpersEvent ? '§opers event session' : undefined,
-          negated: targetNegs.includes('m')
-        },
-        {
-          flag: 'v',
-          name: 'Voice & Broadcast Override',
-          category: 'channel',
-          desc: 'Grants speaking permission in muted (+m) channels, or sets unrestricted mode on #chan+v.',
-          active: isV,
-          inherited: false,
-          inheritedSource: undefined,
-          negated: targetNegs.includes('v')
-        },
-        {
-          flag: 'o',
-          name: 'Channel Operator Privileges',
-          category: 'channel',
-          desc: 'Grants channel management rights, kick/ban capabilities, and bypasses channel restrictions.',
-          active: isO,
-          inherited: Boolean(defaultO || isOpersEvent),
-          inheritedSource: defaultO ? 'Object Prefix ($ or |)' : isOpersEvent ? 'Operator Event Bus' : undefined,
-          negated: targetNegs.includes('o')
-        },
-        {
-          flag: 'a',
-          name: 'Channel Administrator',
-          category: 'channel',
-          desc: 'Highest channel administrative authority and governance.',
-          active: isA,
-          inherited: Boolean(defaultA || isOpersEvent),
-          inheritedSource: defaultA ? 'Object Prefix ($@ or |)' : isOpersEvent ? 'Operator Event Bus' : undefined,
-          negated: targetNegs.includes('a')
-        },
-        {
-          flag: 'k',
-          name: 'Kernel Ring-0 Sandbox',
-          category: 'diagnostic',
-          desc: 'Enables direct low-level kernel diagnostics, register inspection, and page table view.',
-          active: isK,
-          inherited: false,
-          inheritedSource: undefined,
-          negated: targetNegs.includes('k')
-        },
-        {
-          flag: 't',
-          name: 'Trace Telemetry Stream',
-          category: 'diagnostic',
-          desc: 'Captures real-time state transitions, message packets, and event dispatch telemetry.',
-          active: isT,
-          inherited: Boolean(isInheritedT),
-          inheritedSource: isInheritedT ? 'Diagnostic Probe (?*) Scope' : undefined,
-          negated: targetNegs.includes('t')
-        },
-        {
-          flag: 'n',
-          name: 'Netadmin Superuser Only',
-          category: 'network',
-          desc: 'Restricts object interaction exclusively to verified network administrators.',
-          active: isN,
-          inherited: Boolean(defaultN || isOpersEvent),
-          inheritedSource: defaultN ? 'Superuser Scope (~root)' : undefined,
-          negated: targetNegs.includes('n')
-        },
-        {
-          flag: 'N',
-          name: 'Network Services Daemon',
-          category: 'network',
-          desc: 'Enables network services (NickServ, ChanServ, OperServ) daemon bindings.',
-          active: isCapN,
-          inherited: Boolean(defaultCapN),
-          inheritedSource: defaultCapN ? '&services or #network cluster' : undefined,
-          negated: targetNegs.includes('N')
-        },
-        {
-          flag: 'S',
-          name: 'Trusted External Service',
-          category: 'security',
-          desc: 'Verified trusted service tier. Auto-applied to $ai.model and [$@&] objects.',
-          active: isCapS,
-          inherited: Boolean(defaultCapS),
-          inheritedSource: defaultCapS ? 'Auto-applied (AI model / [$@&] scope)' : undefined,
-          negated: targetNegs.includes('S')
-        },
-        {
-          flag: 's',
-          name: 'Untrusted Sandboxed Service',
-          category: 'security',
-          desc: 'Isolated untrusted service sandbox mode for unverified external modules.',
-          active: isSmallS,
-          inherited: false,
-          inheritedSource: undefined,
-          negated: targetNegs.includes('s')
-        }
-      ];
+
 
       const handleSetModeAction = (flag: string, action: 'grant' | 'negate' | 'inherit') => {
         setNegatedModes(prev => {
@@ -1976,12 +2010,12 @@ export default function App() {
             setAddress(`${activeBase}+${[...modifiers.filter(m => m !== 'Δmodes' && m !== 'modes' && m !== 'Δ'), flag, 'Δmodes'].join('+')}`);
           }
           setDeltaNotice(`Applied +${flag} to ${activeBase}`);
-          logModeChange(activeBase, `+${flag}`, `Explicitly granted +${flag} (${allModeDefinitions.find(m => m.flag === flag)?.name || flag})`, '@jakedot');
+          logModeChange(activeBase, `+${flag}`, `Explicitly granted +${flag} (${allModeDefinitionsMemo.find(m => m.flag === flag)?.name || flag})`, '@jakedot');
         } else if (action === 'negate') {
           const cleanMods = modifiers.filter(m => m !== flag);
           setAddress(`${activeBase}+${cleanMods.join('+')}`);
           setDeltaNotice(`Opted-out / Negated -${flag} on ${activeBase}`);
-          logModeChange(activeBase, `-${flag}`, `Opted-out from mode -${flag} (${allModeDefinitions.find(m => m.flag === flag)?.name || flag})`, '@jakedot');
+          logModeChange(activeBase, `-${flag}`, `Opted-out from mode -${flag} (${allModeDefinitionsMemo.find(m => m.flag === flag)?.name || flag})`, '@jakedot');
         } else if (action === 'inherit') {
           const cleanMods = modifiers.filter(m => m !== flag);
           setAddress(`${activeBase}+${cleanMods.join('+')}`);
@@ -2246,7 +2280,7 @@ export default function App() {
               </div>
 
               <div className="space-y-2">
-                {allModeDefinitions.map(mode => {
+                {allModeDefinitionsMemo.map(mode => {
                   let statusBadge = (
                     <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-slate-800 text-slate-400 border border-slate-700">
                       [-] INACTIVE
@@ -2361,7 +2395,7 @@ export default function App() {
                 </span>
                 <button
                   onClick={() => {
-                    const cmd = `/mode ${activeBase} ${allModeDefinitions.filter(m => m.active && !m.negated).map(m => `+${m.flag}`).join('')}${targetNegs.map(n => `-${n}`).join('')}`;
+                    const cmd = `/mode ${activeBase} ${activeModeDefinitionsMemo}${targetNegs.map(n => `-${n}`).join('')}`;
                     navigator.clipboard?.writeText(cmd);
                     setDeltaNotice(`Copied to clipboard: ${cmd}`);
                     setTimeout(() => setDeltaNotice(null), 3000);
@@ -2374,7 +2408,7 @@ export default function App() {
               </div>
 
               <div className="p-2.5 bg-black/80 rounded-lg font-mono text-green-400 text-xs flex items-center justify-between border border-slate-800">
-                <span>/mode {activeBase} {allModeDefinitions.filter(m => m.active && !m.negated).map(m => `+${m.flag}`).join('')}{targetNegs.map(n => `-${n}`).join('') || '+default'}</span>
+                <span>/mode {activeBase} {activeModeDefinitionsMemo}{targetNegs.map(n => `-${n}`).join('') || '+default'}</span>
                 <button
                   onClick={() => setAddress(activeBase)}
                   className="px-2 py-1 bg-indigo-600 hover:bg-indigo-500 text-white rounded text-[10px] font-bold font-sans transition-colors"
@@ -3040,14 +3074,14 @@ export default function App() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-800/50 font-mono">
-                      {TargetProps.filter(p => p.key.toLowerCase().includes(propsSearchFilter.toLowerCase())).length === 0 ? (
+                      {filteredTargetPropsMemo.length === 0 ? (
                         <tr>
                           <td colSpan={6} className="px-3 py-8 text-center text-slate-500 font-sans italic">
                             No properties found.
                           </td>
                         </tr>
                       ) : (
-                        TargetProps.filter(p => p.key.toLowerCase().includes(propsSearchFilter.toLowerCase())).map(prop => (
+                        filteredTargetPropsMemo.map(prop => (
                           <tr key={prop.id} className="hover:bg-slate-900/40 transition-colors group">
                             <td className="px-3 py-2">
                               <span className="text-blue-300">{prop.key}</span>
@@ -3205,10 +3239,10 @@ export default function App() {
 
                 <div className="flex-1 overflow-y-auto">
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                    {TargetSubObjects.filter(s => s.path.toLowerCase().includes(subObjectSearchFilter.toLowerCase()) || s.description.toLowerCase().includes(subObjectSearchFilter.toLowerCase())).length === 0 ? (
+                    {filteredTargetSubObjectsMemo.length === 0 ? (
                       <div className="col-span-full py-8 text-center text-slate-500 italic">No subobjects discovered for this node.</div>
                     ) : (
-                      TargetSubObjects.filter(s => s.path.toLowerCase().includes(subObjectSearchFilter.toLowerCase()) || s.description.toLowerCase().includes(subObjectSearchFilter.toLowerCase())).map((sub, idx) => (
+                      filteredTargetSubObjectsMemo.map((sub, idx) => (
                         <div 
                           key={idx} 
                           onClick={() => setAddress(sub.path)}
