@@ -23,8 +23,22 @@ async function startServer() {
   const app = express();
   const PORT = 3000;
 
-  app.use(express.json());
-  app.use(cors());
+  // 🛡️ Security Enhancement: Limit payload size to prevent DoS
+  app.use(express.json({ limit: '50kb' }));
+
+  // 🛡️ Security Enhancement: Restrict overly permissive CORS configuration
+  const allowedOrigins = [process.env.APP_URL, 'http://localhost:3000', 'http://127.0.0.1:3000'].filter(Boolean) as string[];
+  app.use(cors({
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(null, false);
+      }
+    }
+  }));
+
+  app.disable('x-powered-by'); // Hide Express framework signature
 
   // 🛡️ Security Enhancement: Add security headers to prevent common attacks
   app.use((req, res, next) => {
