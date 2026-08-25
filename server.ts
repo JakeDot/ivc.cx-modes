@@ -3,6 +3,7 @@ import path from "path";
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI, GenerateContentResponse } from "@google/genai";
 import cors from "cors";
+import helmet from "helmet";
 
 // 🛡️ Security Enhancement: Rate limiting to prevent DoS and API quota exhaustion
 const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
@@ -26,6 +27,19 @@ async function startServer() {
   // 🛡️ Security Enhancement: Limit payload size to prevent DoS
   app.use(express.json({ limit: '50kb' }));
 
+  // 🛡️ Security Enhancement: Use Helmet to set various security headers
+  app.use(helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        imgSrc: ["'self'", "data:", "https://avatars.githubusercontent.com"],
+        connectSrc: ["'self'", "ws:", "wss:", "https://api.github.com"],
+      },
+    },
+  }));
+
   // 🛡️ Security Enhancement: Restrict overly permissive CORS configuration
   const allowedOrigins = [process.env.APP_URL, 'http://localhost:3000', 'http://127.0.0.1:3000'].filter(Boolean) as string[];
   app.use(cors({
@@ -40,13 +54,6 @@ async function startServer() {
 
   app.disable('x-powered-by'); // Hide Express framework signature
 
-  // 🛡️ Security Enhancement: Add security headers to prevent common attacks
-  app.use((req, res, next) => {
-    res.setHeader("X-Content-Type-Options", "nosniff");
-    res.setHeader("X-Frame-Options", "DENY");
-    res.setHeader("X-XSS-Protection", "1; mode=block");
-    next();
-  });
 
   // Modes Model API Documentation Route (HTML Content-Type)
   const modesApiDocsHandler = (req: express.Request, res: express.Response) => {
@@ -417,6 +424,20 @@ async function startServer() {
       }
       if (req.body.message && req.body.message.length > 4000) {
         return res.status(400).json({ error: "Message exceeds maximum allowed length" });
+      }
+
+      // 🛡️ Security Enhancement: Validate all user-supplied data to prevent injection or crash risks
+      if (req.body.history !== undefined && !Array.isArray(req.body.history)) {
+        return res.status(400).json({ error: "Invalid history format" });
+      }
+      if (req.body.contextType !== undefined && typeof req.body.contextType !== 'string') {
+        return res.status(400).json({ error: "Invalid contextType format" });
+      }
+      if (req.body.channelName !== undefined && typeof req.body.channelName !== 'string') {
+        return res.status(400).json({ error: "Invalid channelName format" });
+      }
+      if (req.body.anonymousSessionId !== undefined && typeof req.body.anonymousSessionId !== 'string') {
+        return res.status(400).json({ error: "Invalid anonymousSessionId format" });
       }
 
       const { model, message, history, contextType, channelName, anonymousSessionId } = req.body;
