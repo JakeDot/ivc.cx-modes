@@ -468,7 +468,7 @@ export default function App() {
     try { return JSON.parse(localStorage.getItem('lite_activeServerChannel') || '{}'); } catch { return {}; }
   });
   const [anonymousSessionId, setAnonymousSessionId] = useState<string>(() => {
-    return 'anon_sess_' + Math.random().toString(36).substring(2, 7);
+    return 'anon_sess_' + crypto.randomUUID().substring(0, 8);
   });
   const [manualFacet, setManualFacet] = useState<Record<string, 'server' | 'channel' | 'privmsg'>>({});
   const [modelChatInput, setModelChatInput] = useState('');
@@ -5065,7 +5065,7 @@ BLOCK_SEXUALLY_EXPLICIT=HIGH</pre>
                 <div className="flex items-center space-x-2">
                   <button
                     onClick={() => {
-                      const newId = 'anon_sess_' + Math.random().toString(36).substring(2, 7);
+                      const newId = 'anon_sess_' + crypto.randomUUID().substring(0, 8);
                       setAnonymousSessionId(newId);
                     }}
                     className="px-2.5 py-1 bg-amber-950/80 hover:bg-amber-900 border border-amber-800 text-amber-200 rounded text-[10px] flex items-center space-x-1 transition-colors"
