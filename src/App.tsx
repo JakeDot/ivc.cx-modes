@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { Home, Search, Bell, Menu, User, MessageSquare, Heart, Share2, MoreHorizontal, GitCommit, Code, Terminal, Send, Hash, ChevronRight, Folder, Bookmark, EyeOff, Ban, Server, Activity, PlaySquare, Sparkles, Settings, Database, ShieldCheck, ShieldAlert, Cpu, Coins, Layers, Zap, Workflow, Binary, GitFork, Gauge, Radio, Volume2, Mic, CheckCircle2, Sliders, SlidersHorizontal, RotateCcw, Check, Copy, Plus, Minus, ArrowRight, Shield, Info, History, Clock, UserCheck, Filter, Users, Lock, RefreshCw, Trash2, Globe, Key, Pin, Edit3, Edit2, ExternalLink, FileText, GitCompare, Table, FileCode, Braces, Split, Network, CornerDownRight, X, FolderTree, FileDiff } from 'lucide-react';
 
 interface PrefixDescriptor {
@@ -418,6 +418,70 @@ interface Post {
   avatarUrl?: string;
   url: string;
 }
+
+// ⚡ Bolt Optimization: Extracted renderPost into a React.memo wrapped component
+// Impact: Prevents O(N) DOM re-creation of all feed items on every keystroke in the command input, reducing render lag.
+interface PostItemProps {
+  post: Post;
+  isBookmarked: boolean;
+  isLiked: boolean;
+  displayLikes: number;
+  setAddress: (address: string | ((prev: string) => string)) => void;
+  toggleLike: (e: React.MouseEvent, postId: string) => void;
+  toggleBookmark: (e: React.MouseEvent, post: Post) => void;
+}
+
+const PostItem = React.memo(({ post, isBookmarked, isLiked, displayLikes, setAddress, toggleLike, toggleBookmark }: PostItemProps) => {
+  return (
+    <article className="bg-white border-b border-gray-200 p-4 hover:bg-gray-50 transition-colors cursor-pointer" onClick={() => window.open(post.url, '_blank')}>
+      <div className="flex space-x-3">
+        {post.avatarUrl ? (
+          <img src={post.avatarUrl} alt={post.author} className="w-10 h-10 rounded-sm flex-shrink-0 object-cover bg-gray-200" onClick={(e) => { e.stopPropagation(); setAddress(post.handle); }} />
+        ) : (
+          <div className="w-10 h-10 bg-gray-200 rounded-sm flex-shrink-0 flex items-center justify-center" onClick={(e) => { e.stopPropagation(); setAddress(post.handle); }}>
+            <User className="w-5 h-5 text-gray-500" />
+          </div>
+        )}
+
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center justify-between">
+            <div className="flex items-baseline space-x-2 truncate">
+              <h2 className="text-base font-bold text-gray-900 truncate hover:underline" onClick={(e) => { e.stopPropagation(); setAddress(post.handle); }}>{post.author}</h2>
+              <span className="text-sm text-blue-600 hover:underline truncate" onClick={(e) => { e.stopPropagation(); setAddress(post.handle); }}>{post.handle}</span>
+              <span className="text-sm text-gray-500">· {post.time}</span>
+            </div>
+            <button className="text-gray-400 hover:text-gray-600 px-1 py-0.5">
+              <MoreHorizontal className="w-4 h-4" />
+            </button>
+          </div>
+
+          <div className="mt-1 flex items-start space-x-2">
+            <GitCommit className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
+            <p className="text-sm text-gray-800 leading-relaxed whitespace-pre-wrap font-mono text-[13px]">
+              {post.content}
+            </p>
+          </div>
+
+          {/* Action Bar */}
+          <div className="mt-3 flex items-center space-x-6 text-gray-500">
+            <button className="flex items-center space-x-1.5 hover:text-blue-600 group" onClick={(e) => { e.stopPropagation(); setAddress(`${post.handle}+pm`); }}>
+              <MessageSquare className="w-4 h-4 group-active:scale-95 transition-transform" />
+              <span className="text-xs font-medium">PM</span>
+            </button>
+            <button className={`flex items-center space-x-1.5 group ${isLiked ? 'text-red-500' : 'hover:text-red-600'}`} onClick={(e) => toggleLike(e, post.id)}>
+              <Heart className="w-4 h-4 group-active:scale-95 transition-transform" fill={isLiked ? "currentColor" : "none"} />
+              <span className="text-xs font-medium">{displayLikes}</span>
+            </button>
+            <button className={`flex items-center space-x-1.5 group ${isBookmarked ? 'text-yellow-500' : 'hover:text-yellow-600'}`} onClick={(e) => toggleBookmark(e, post)}>
+              <Bookmark className="w-4 h-4 group-active:scale-95 transition-transform" fill={isBookmarked ? "currentColor" : "none"} />
+              <span className="text-xs font-medium">Save</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </article>
+  );
+});
 
 export default function App() {
   const [address, setAddress] = useState('#feed');
@@ -1052,15 +1116,15 @@ export default function App() {
   };
 
   // Subobject modifiers actions
-  const toggleBookmark = (e: React.MouseEvent, post: Post) => {
+  const toggleBookmark = useCallback((e: React.MouseEvent, post: Post) => {
     e.stopPropagation();
     setBookmarks(prev => prev.some(b => b.id === post.id) ? prev.filter(b => b.id !== post.id) : [...prev, post]);
-  };
+  }, []);
 
-  const toggleLike = (e: React.MouseEvent, postId: string) => {
+  const toggleLike = useCallback((e: React.MouseEvent, postId: string) => {
     e.stopPropagation();
     setLikes(prev => prev.includes(postId) ? prev.filter(id => id !== postId) : [...prev, postId]);
-  };
+  }, []);
 
   const toggleIgnore = (handle: string) => {
     setIgnored(prev => prev.includes(handle) ? prev.filter(h => h !== handle) : [...prev, handle]);
@@ -1758,53 +1822,16 @@ export default function App() {
     const displayLikes = post.baseLikes + (isLiked ? 1 : 0);
 
     return (
-      <article key={post.id} className="bg-white border-b border-gray-200 p-4 hover:bg-gray-50 transition-colors cursor-pointer" onClick={() => window.open(post.url, '_blank')}>
-        <div className="flex space-x-3">
-          {post.avatarUrl ? (
-            <img src={post.avatarUrl} alt={post.author} className="w-10 h-10 rounded-sm flex-shrink-0 object-cover bg-gray-200" onClick={(e) => { e.stopPropagation(); setAddress(post.handle); }} />
-          ) : (
-            <div className="w-10 h-10 bg-gray-200 rounded-sm flex-shrink-0 flex items-center justify-center" onClick={(e) => { e.stopPropagation(); setAddress(post.handle); }}>
-              <User className="w-5 h-5 text-gray-500" />
-            </div>
-          )}
-          
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center justify-between">
-              <div className="flex items-baseline space-x-2 truncate">
-                <h2 className="text-base font-bold text-gray-900 truncate hover:underline" onClick={(e) => { e.stopPropagation(); setAddress(post.handle); }}>{post.author}</h2>
-                <span className="text-sm text-blue-600 hover:underline truncate" onClick={(e) => { e.stopPropagation(); setAddress(post.handle); }}>{post.handle}</span>
-                <span className="text-sm text-gray-500">· {post.time}</span>
-              </div>
-              <button className="text-gray-400 hover:text-gray-600 px-1 py-0.5">
-                <MoreHorizontal className="w-4 h-4" />
-              </button>
-            </div>
-            
-            <div className="mt-1 flex items-start space-x-2">
-              <GitCommit className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
-              <p className="text-sm text-gray-800 leading-relaxed whitespace-pre-wrap font-mono text-[13px]">
-                {post.content}
-              </p>
-            </div>
-            
-            {/* Action Bar */}
-            <div className="mt-3 flex items-center space-x-6 text-gray-500">
-              <button className="flex items-center space-x-1.5 hover:text-blue-600 group" onClick={(e) => { e.stopPropagation(); setAddress(`${post.handle}+pm`); }}>
-                <MessageSquare className="w-4 h-4 group-active:scale-95 transition-transform" />
-                <span className="text-xs font-medium">PM</span>
-              </button>
-              <button className={`flex items-center space-x-1.5 group ${isLiked ? 'text-red-500' : 'hover:text-red-600'}`} onClick={(e) => toggleLike(e, post.id)}>
-                <Heart className="w-4 h-4 group-active:scale-95 transition-transform" fill={isLiked ? "currentColor" : "none"} />
-                <span className="text-xs font-medium">{displayLikes}</span>
-              </button>
-              <button className={`flex items-center space-x-1.5 group ${isBookmarked ? 'text-yellow-500' : 'hover:text-yellow-600'}`} onClick={(e) => toggleBookmark(e, post)}>
-                <Bookmark className="w-4 h-4 group-active:scale-95 transition-transform" fill={isBookmarked ? "currentColor" : "none"} />
-                <span className="text-xs font-medium">Save</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      </article>
+      <PostItem
+        key={post.id}
+        post={post}
+        isBookmarked={isBookmarked}
+        isLiked={isLiked}
+        displayLikes={displayLikes}
+        setAddress={setAddress}
+        toggleLike={toggleLike}
+        toggleBookmark={toggleBookmark}
+      />
     );
   };
 
