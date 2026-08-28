@@ -23,6 +23,9 @@ async function startServer() {
   const app = express();
   const PORT = 3000;
 
+  // 🛡️ Security Enhancement: Trust first proxy to ensure rate limiting uses real client IP
+  app.set('trust proxy', 1);
+
   // 🛡️ Security Enhancement: Limit payload size to prevent DoS
   app.use(express.json({ limit: '50kb' }));
 
@@ -45,6 +48,7 @@ async function startServer() {
     res.setHeader("X-Content-Type-Options", "nosniff");
     res.setHeader("X-Frame-Options", "DENY");
     res.setHeader("X-XSS-Protection", "1; mode=block");
+    res.setHeader("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
     next();
   });
 
@@ -412,11 +416,14 @@ async function startServer() {
       if (req.body.model !== undefined && typeof req.body.model !== 'string') {
         return res.status(400).json({ error: "Invalid model format" });
       }
-      if (req.body.message !== undefined && typeof req.body.message !== 'string') {
-        return res.status(400).json({ error: "Invalid message format" });
+      if (!req.body.message || typeof req.body.message !== 'string') {
+        return res.status(400).json({ error: "Message is required and must be a string" });
       }
-      if (req.body.message && req.body.message.length > 4000) {
+      if (req.body.message.length > 4000) {
         return res.status(400).json({ error: "Message exceeds maximum allowed length" });
+      }
+      if (req.body.history !== undefined && !Array.isArray(req.body.history)) {
+        return res.status(400).json({ error: "Invalid history format" });
       }
 
       const { model, message, history, contextType, channelName, anonymousSessionId } = req.body;
@@ -498,7 +505,7 @@ async function startServer() {
       res.write("data: [DONE]\n\n");
       res.end();
     } catch (error: any) {
-      console.error("Operation failed", error);
+      console.error("Operation failed", error.message || error);
       res.status(500).json({ error: "Failed to communicate with AI model" });
     }
   });
