@@ -881,6 +881,10 @@ export default function App() {
     return sourcePosts.filter(p => !ignored.includes(p.handle) && !banned.includes(p.handle));
   }, [baseTarget, posts, ivcPosts, ignored, banned]);
 
+  // Memoize sets for O(1) lookup in renderPost
+  const bookmarkedIds = useMemo(() => new Set(bookmarks.map(b => b.id)), [bookmarks]);
+  const likedIds = useMemo(() => new Set(likes), [likes]);
+
   // Scroll to bottom of chat when it updates
   useEffect(() => {
     if (baseTarget.startsWith('$') && chatEndRef.current) {
@@ -1753,8 +1757,8 @@ export default function App() {
   };
 
   const renderPost = (post: Post) => {
-    const isBookmarked = bookmarks.some(b => b.id === post.id);
-    const isLiked = likes.includes(post.id);
+    const isBookmarked = bookmarkedIds.has(post.id);
+    const isLiked = likedIds.has(post.id);
     const displayLikes = post.baseLikes + (isLiked ? 1 : 0);
 
     return (
