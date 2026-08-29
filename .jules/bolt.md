@@ -8,3 +8,7 @@
 ## 2024-03-22 - Extracted address parsing into useMemo
 **Learning:** The React application (`App.tsx`) was performing heavy string parsing, matrix matching, and object manipulation on an `address` string (e.g. `ivc://host/#feed/&config`) directly in the render function on *every single re-render* (including during input typing). This pattern causes major CPU bottlenecks and slow React commit phases.
 **Action:** Always wrap non-trivial pure computations, string matchers, regex extraction, or complex derived states into `useMemo` blocks keyed to the minimal amount of primitive/reactive dependencies required (in this case: `address`, `negatedModes`, `manualFacet`). This prevents re-evaluation during normal keystrokes.
+
+## 2024-11-20 - Memoizing list lookups using Sets to avoid O(N*M)
+**Learning:** During the rendering of large lists of posts (the feed), iterating over other state arrays like `likes`, `bookmarks`, `ignored`, or `banned` repeatedly using `Array.includes()` or `Array.some()` for each post causes significant main-thread CPU overhead (an O(N*M) time complexity).
+**Action:** When filtering or enriching large lists of items (e.g. mapping `visiblePosts`), always pre-compute array-based lookups into native `Set` objects at the top level of the component using `useMemo`. Using `Set.has()` reduces the lookup check to O(1), restoring linear O(N) rendering time.
