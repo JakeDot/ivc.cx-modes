@@ -23,6 +23,10 @@ async function startServer() {
   const app = express();
   const PORT = 3000;
 
+  // 🛡️ Security Enhancement: Trust proxy to accurately resolve client IPs behind Cloud Run / Load Balancers
+  // Without this, all requests share the proxy's IP, which breaks rate limiting and causes DoS for all users when one hits the limit.
+  app.set('trust proxy', 1);
+
   // 🛡️ Security Enhancement: Limit payload size to prevent DoS
   app.use(express.json({ limit: '50kb' }));
 
