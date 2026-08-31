@@ -446,6 +446,10 @@ export default function App() {
   const [banned, setBanned] = useState<string[]>(() => {
     try { return JSON.parse(localStorage.getItem('lite_banned') || '[]'); } catch { return []; }
   });
+
+  // O(1) Lookup Sets for Render Optimization
+  const bookmarkedIds = useMemo(() => new Set(bookmarks.map(b => b.id)), [bookmarks]);
+  const likedIds = useMemo(() => new Set(likes), [likes]);
   
   const [negatedModes, setNegatedModes] = useState<Record<string, string[]>>(() => {
     try { return JSON.parse(localStorage.getItem('lite_negatedModes') || '{}'); } catch { return {}; }
@@ -1753,8 +1757,8 @@ export default function App() {
   };
 
   const renderPost = (post: Post) => {
-    const isBookmarked = bookmarks.some(b => b.id === post.id);
-    const isLiked = likes.includes(post.id);
+    const isBookmarked = bookmarkedIds.has(post.id);
+    const isLiked = likedIds.has(post.id);
     const displayLikes = post.baseLikes + (isLiked ? 1 : 0);
 
     return (
