@@ -881,6 +881,11 @@ export default function App() {
     return sourcePosts.filter(p => !ignored.includes(p.handle) && !banned.includes(p.handle));
   }, [baseTarget, posts, ivcPosts, ignored, banned]);
 
+  // ⚡ Bolt Optimization: Precompute bookmarks and likes lookups into Sets to avoid O(N*M) time complexity during list rendering.
+  // Impact: Reduces lookup time for each post from O(N) to O(1), significantly improving render performance for large feeds.
+  const bookmarkedIdsSet = useMemo(() => new Set(bookmarks.map(b => b.id)), [bookmarks]);
+  const likedIdsSet = useMemo(() => new Set(likes), [likes]);
+
   // Scroll to bottom of chat when it updates
   useEffect(() => {
     if (baseTarget.startsWith('$') && chatEndRef.current) {
@@ -1753,8 +1758,8 @@ export default function App() {
   };
 
   const renderPost = (post: Post) => {
-    const isBookmarked = bookmarks.some(b => b.id === post.id);
-    const isLiked = likes.includes(post.id);
+    const isBookmarked = bookmarkedIdsSet.has(post.id);
+    const isLiked = likedIdsSet.has(post.id);
     const displayLikes = post.baseLikes + (isLiked ? 1 : 0);
 
     return (
