@@ -446,6 +446,12 @@ export default function App() {
   const [banned, setBanned] = useState<string[]>(() => {
     try { return JSON.parse(localStorage.getItem('lite_banned') || '[]'); } catch { return []; }
   });
+
+  // Precompute sets for O(1) lookups in rendering loops
+  const bookmarksSet = useMemo(() => new Set(bookmarks.map(b => b.id)), [bookmarks]);
+  const likesSet = useMemo(() => new Set(likes), [likes]);
+  const ignoredSet = useMemo(() => new Set(ignored), [ignored]);
+  const bannedSet = useMemo(() => new Set(banned), [banned]);
   
   const [negatedModes, setNegatedModes] = useState<Record<string, string[]>>(() => {
     try { return JSON.parse(localStorage.getItem('lite_negatedModes') || '{}'); } catch { return {}; }
@@ -878,8 +884,8 @@ export default function App() {
   // Memoize visible posts to prevent expensive array filtering on every render
   const visiblePostsMemo = useMemo(() => {
     const sourcePosts = baseTarget === '#feed' ? posts : ivcPosts.filter(p => p.handle === baseTarget);
-    return sourcePosts.filter(p => !ignored.includes(p.handle) && !banned.includes(p.handle));
-  }, [baseTarget, posts, ivcPosts, ignored, banned]);
+    return sourcePosts.filter(p => !ignoredSet.has(p.handle) && !bannedSet.has(p.handle));
+  }, [baseTarget, posts, ivcPosts, ignoredSet, bannedSet]);
 
   // Scroll to bottom of chat when it updates
   useEffect(() => {
@@ -1753,8 +1759,8 @@ export default function App() {
   };
 
   const renderPost = (post: Post) => {
-    const isBookmarked = bookmarks.some(b => b.id === post.id);
-    const isLiked = likes.includes(post.id);
+    const isBookmarked = bookmarksSet.has(post.id);
+    const isLiked = likesSet.has(post.id);
     const displayLikes = post.baseLikes + (isLiked ? 1 : 0);
 
     return (
@@ -2891,8 +2897,8 @@ export default function App() {
           metadata: {
             resolved_posts_count: userPosts.length,
             recent_activity: userPosts,
-            ignored_status: ignored.includes(baseTarget),
-            banned_status: banned.includes(baseTarget),
+            ignored_status: ignoredSet.has(baseTarget),
+            banned_status: bannedSet.has(baseTarget),
             active_modifiers: modifiers
           }
         };
@@ -5417,7 +5423,7 @@ BLOCK_SEXUALLY_EXPLICIT=HIGH</pre>
     }
 
     if (isLike) {
-      const likedPosts = posts.filter(p => likes.includes(p.id));
+      const likedPosts = posts.filter(p => likesSet.has(p.id));
       return (
         <div className="flex flex-col pb-28">
           <div className="p-4 border-b border-gray-200 bg-gray-50 sticky top-0 z-10">
@@ -5467,8 +5473,8 @@ BLOCK_SEXUALLY_EXPLICIT=HIGH</pre>
 
     // 3. SPECIFIC USER PROFILE VIEW (Without modifiers)
     if ((baseTarget.startsWith('@') || baseTarget.startsWith('$@')) && baseTarget !== '@object' && baseTarget !== '@me') {
-      const isUserIgnored = ignored.includes(baseTarget);
-      const isUserBanned = banned.includes(baseTarget);
+      const isUserIgnored = ignoredSet.has(baseTarget);
+      const isUserBanned = bannedSet.has(baseTarget);
 
       let roleLabel = 'User Identity Subobject';
       let IconComponent = User;
