@@ -875,11 +875,18 @@ export default function App() {
     isT, isV, isO, isMuted, isA
   } = derivedState;
 
+  // ⚡ Bolt Optimization: Precompute O(1) Set lookups for arrays used in render loops
+  // Impact: Reduces time complexity from O(N*M) to O(N) when filtering posts and rendering lists
+  const ignoredSet = useMemo(() => new Set(ignored), [ignored]);
+  const bannedSet = useMemo(() => new Set(banned), [banned]);
+  const bookmarkedIdsSet = useMemo(() => new Set(bookmarks.map(b => b.id)), [bookmarks]);
+  const likedIdsSet = useMemo(() => new Set(likes), [likes]);
+
   // Memoize visible posts to prevent expensive array filtering on every render
   const visiblePostsMemo = useMemo(() => {
     const sourcePosts = baseTarget === '#feed' ? posts : ivcPosts.filter(p => p.handle === baseTarget);
-    return sourcePosts.filter(p => !ignored.includes(p.handle) && !banned.includes(p.handle));
-  }, [baseTarget, posts, ivcPosts, ignored, banned]);
+    return sourcePosts.filter(p => !ignoredSet.has(p.handle) && !bannedSet.has(p.handle));
+  }, [baseTarget, posts, ivcPosts, ignoredSet, bannedSet]);
 
   // Scroll to bottom of chat when it updates
   useEffect(() => {
@@ -1753,8 +1760,8 @@ export default function App() {
   };
 
   const renderPost = (post: Post) => {
-    const isBookmarked = bookmarks.some(b => b.id === post.id);
-    const isLiked = likes.includes(post.id);
+    const isBookmarked = bookmarkedIdsSet.has(post.id);
+    const isLiked = likedIdsSet.has(post.id);
     const displayLikes = post.baseLikes + (isLiked ? 1 : 0);
 
     return (
