@@ -21,6 +21,10 @@ setInterval(() => {
 
 async function startServer() {
   const app = express();
+
+  // 🛡️ Security Enhancement: Trust reverse proxy (e.g., Cloud Run) to resolve originating client IPs correctly
+  // This is required for the rate limiter to apply per-IP rather than globally blocking the proxy IP.
+  app.set('trust proxy', 1);
   const PORT = 3000;
 
   // 🛡️ Security Enhancement: Limit payload size to prevent DoS
