@@ -8,3 +8,7 @@
 ## 2024-03-22 - Extracted address parsing into useMemo
 **Learning:** The React application (`App.tsx`) was performing heavy string parsing, matrix matching, and object manipulation on an `address` string (e.g. `ivc://host/#feed/&config`) directly in the render function on *every single re-render* (including during input typing). This pattern causes major CPU bottlenecks and slow React commit phases.
 **Action:** Always wrap non-trivial pure computations, string matchers, regex extraction, or complex derived states into `useMemo` blocks keyed to the minimal amount of primitive/reactive dependencies required (in this case: `address`, `negatedModes`, `manualFacet`). This prevents re-evaluation during normal keystrokes.
+
+## 2024-09-12 - List Rendering O(N*M) Bottleneck Mitigation
+**Learning:** During profiling, it was identified that filtering or mapping over large list rendering loops (e.g. `renderPost` called hundreds of times for each feed update) using array functions (`.includes`, `.some`) on local state (`likes`, `bookmarks`) creates an O(N*M) time complexity trap per render cycle. This significantly slows down the React commit phase and causes main-thread jitter when typing or scrolling.
+**Action:** Precompute target arrays into `Set` structures via a `useMemo` hook at the top level, providing O(1) loop lookups per post rendered.
