@@ -21,6 +21,10 @@ setInterval(() => {
 
 async function startServer() {
   const app = express();
+
+  // 🛡️ Security Enhancement: Trust reverse proxy to correctly resolve client IPs (prevents DoS via shared proxy IP)
+  app.set('trust proxy', 1);
+
   const PORT = 3000;
 
   // 🛡️ Security Enhancement: Limit payload size to prevent DoS
