@@ -875,6 +875,10 @@ export default function App() {
     isT, isV, isO, isMuted, isA
   } = derivedState;
 
+  // Precompute Sets for O(1) lookups in renderPost instead of O(M) inside the map
+  const bookmarkedIdsSet = useMemo(() => new Set(bookmarks.map(b => b.id)), [bookmarks]);
+  const likedIdsSet = useMemo(() => new Set(likes), [likes]);
+
   // Memoize visible posts to prevent expensive array filtering on every render
   const visiblePostsMemo = useMemo(() => {
     const sourcePosts = baseTarget === '#feed' ? posts : ivcPosts.filter(p => p.handle === baseTarget);
@@ -1753,8 +1757,8 @@ export default function App() {
   };
 
   const renderPost = (post: Post) => {
-    const isBookmarked = bookmarks.some(b => b.id === post.id);
-    const isLiked = likes.includes(post.id);
+    const isBookmarked = bookmarkedIdsSet.has(post.id);
+    const isLiked = likedIdsSet.has(post.id);
     const displayLikes = post.baseLikes + (isLiked ? 1 : 0);
 
     return (
