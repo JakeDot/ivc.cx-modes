@@ -6,3 +6,7 @@
 **Vulnerability:** Overly permissive defaults on `express.json()` and `cors()` in Express setup.
 **Learning:** By default, `express.json()` allows unlimited payload sizes, which can lead to DoS attacks via memory exhaustion. Similarly, `cors()` without options allows all origins, which can lead to unauthorized cross-origin requests.
 **Prevention:** Always configure `express.json({ limit: '...' })` and define a strict `origin` array/function for `cors()`.
+## 2025-03-09 - [Fix IP resolution for rate limiting]
+**Vulnerability:** [The rate limiting middleware used req.ip which resolves to the reverse proxy's IP instead of the client's IP, effectively rate limiting all users as one entity.]
+**Learning:** [Express requires 'trust proxy' to be configured to parse the X-Forwarded-For headers when running behind a reverse proxy like Cloud Run.]
+**Prevention:** [Always configure app.set('trust proxy', 1) when deploying an Express application behind a reverse proxy to ensure accurate IP resolution for security features like rate limiting.]
