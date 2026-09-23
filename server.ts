@@ -21,6 +21,8 @@ setInterval(() => {
 
 async function startServer() {
   const app = express();
+  // 🛡️ Security Enhancement: Ensure req.ip is correct when behind a reverse proxy (e.g. Cloud Run)
+  app.set('trust proxy', 1);
   const PORT = 3000;
 
   // 🛡️ Security Enhancement: Limit payload size to prevent DoS
