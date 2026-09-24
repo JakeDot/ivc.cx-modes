@@ -690,6 +690,12 @@ export default function App() {
   useEffect(() => { localStorage.setItem('lite_personal_topics', JSON.stringify(personalTopics)); }, [personalTopics]);
   useEffect(() => { localStorage.setItem('lite_object_props', JSON.stringify(objectPropsStore)); }, [objectPropsStore]);
 
+  // Pre-calculate sets to optimize lookup performance from O(n) to O(1) inside list renders.
+  const ignoredSet = useMemo(() => new Set<string>(ignored), [ignored]);
+  const bannedSet = useMemo(() => new Set<string>(banned), [banned]);
+  const bookmarkedIdsSet = useMemo(() => new Set<string>(bookmarks.map((b) => b.id)), [bookmarks]);
+  const likedIdsSet = useMemo(() => new Set<string>(likes), [likes]);
+
   // ⚡ Bolt Optimization: Memoized the complex address parsing and modifier resolution logic.
   // Impact: Prevents re-evaluation of 50+ mode variables and string manipulations on every keystroke, reducing CPU cycles during render by ~80%.
   const derivedState = useMemo(() => {
@@ -878,8 +884,8 @@ export default function App() {
   // Memoize visible posts to prevent expensive array filtering on every render
   const visiblePostsMemo = useMemo(() => {
     const sourcePosts = baseTarget === '#feed' ? posts : ivcPosts.filter(p => p.handle === baseTarget);
-    return sourcePosts.filter(p => !ignored.includes(p.handle) && !banned.includes(p.handle));
-  }, [baseTarget, posts, ivcPosts, ignored, banned]);
+    return sourcePosts.filter(p => !ignoredSet.has(p.handle) && !bannedSet.has(p.handle));
+  }, [baseTarget, posts, ivcPosts, ignoredSet, bannedSet]);
 
   // Scroll to bottom of chat when it updates
   useEffect(() => {
@@ -1753,8 +1759,8 @@ export default function App() {
   };
 
   const renderPost = (post: Post) => {
-    const isBookmarked = bookmarks.some(b => b.id === post.id);
-    const isLiked = likes.includes(post.id);
+    const isBookmarked = bookmarkedIdsSet.has(post.id);
+    const isLiked = likedIdsSet.has(post.id);
     const displayLikes = post.baseLikes + (isLiked ? 1 : 0);
 
     return (
