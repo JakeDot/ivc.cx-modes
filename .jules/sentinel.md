@@ -6,3 +6,8 @@
 **Vulnerability:** Overly permissive defaults on `express.json()` and `cors()` in Express setup.
 **Learning:** By default, `express.json()` allows unlimited payload sizes, which can lead to DoS attacks via memory exhaustion. Similarly, `cors()` without options allows all origins, which can lead to unauthorized cross-origin requests.
 **Prevention:** Always configure `express.json({ limit: '...' })` and define a strict `origin` array/function for `cors()`.
+
+## 2024-05-24 - [Rate Limiting IP Bypass Behind Proxy]
+**Vulnerability:** IP-based rate limiting on the `/api/chat` endpoint could be bypassed or incorrectly applied because Express was not configured to trust the reverse proxy (Cloud Run).
+**Learning:** Without `app.set('trust proxy', 1)`, Express uses the immediate socket's remote address, which is the proxy's IP, instead of the client's actual IP provided in the `X-Forwarded-For` header.
+**Prevention:** Always set `app.set('trust proxy', 1)` (or appropriate trust level) when running Express applications with IP-dependent middleware behind a reverse proxy.
