@@ -875,11 +875,18 @@ export default function App() {
     isT, isV, isO, isMuted, isA
   } = derivedState;
 
+  // ⚡ Bolt Optimization: Precompute lookup arrays into O(1) Sets using useMemo
+  // Impact: Prevents O(N*M) time complexity during large list renders.
+  const ignoredSet = useMemo(() => new Set<string>(ignored), [ignored]);
+  const bannedSet = useMemo(() => new Set<string>(banned), [banned]);
+  const likesSet = useMemo(() => new Set<string>(likes), [likes]);
+  const bookmarkedIdsSet = useMemo(() => new Set<string>(bookmarks.map(b => b.id)), [bookmarks]);
+
   // Memoize visible posts to prevent expensive array filtering on every render
   const visiblePostsMemo = useMemo(() => {
     const sourcePosts = baseTarget === '#feed' ? posts : ivcPosts.filter(p => p.handle === baseTarget);
-    return sourcePosts.filter(p => !ignored.includes(p.handle) && !banned.includes(p.handle));
-  }, [baseTarget, posts, ivcPosts, ignored, banned]);
+    return sourcePosts.filter(p => !ignoredSet.has(p.handle) && !bannedSet.has(p.handle));
+  }, [baseTarget, posts, ivcPosts, ignoredSet, bannedSet]);
 
   // Scroll to bottom of chat when it updates
   useEffect(() => {
@@ -1753,8 +1760,8 @@ export default function App() {
   };
 
   const renderPost = (post: Post) => {
-    const isBookmarked = bookmarks.some(b => b.id === post.id);
-    const isLiked = likes.includes(post.id);
+    const isBookmarked = bookmarkedIdsSet.has(post.id);
+    const isLiked = likesSet.has(post.id);
     const displayLikes = post.baseLikes + (isLiked ? 1 : 0);
 
     return (
@@ -5417,7 +5424,7 @@ BLOCK_SEXUALLY_EXPLICIT=HIGH</pre>
     }
 
     if (isLike) {
-      const likedPosts = posts.filter(p => likes.includes(p.id));
+      const likedPosts = posts.filter(p => likesSet.has(p.id));
       return (
         <div className="flex flex-col pb-28">
           <div className="p-4 border-b border-gray-200 bg-gray-50 sticky top-0 z-10">
