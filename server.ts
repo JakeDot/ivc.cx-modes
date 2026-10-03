@@ -21,6 +21,7 @@ setInterval(() => {
 
 async function startServer() {
   const app = express();
+  app.set('trust proxy', 1);
   const PORT = 3000;
 
   // 🛡️ Security Enhancement: Limit payload size to prevent DoS
