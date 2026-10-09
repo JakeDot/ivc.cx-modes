@@ -6,3 +6,7 @@
 **Vulnerability:** Overly permissive defaults on `express.json()` and `cors()` in Express setup.
 **Learning:** By default, `express.json()` allows unlimited payload sizes, which can lead to DoS attacks via memory exhaustion. Similarly, `cors()` without options allows all origins, which can lead to unauthorized cross-origin requests.
 **Prevention:** Always configure `express.json({ limit: '...' })` and define a strict `origin` array/function for `cors()`.
+## 2025-10-09 - [Missing Trust Proxy Configuration]
+**Vulnerability:** The Express backend lacked `app.set('trust proxy', 1)` while running behind a reverse proxy.
+**Learning:** Without trusting the proxy, `req.ip` falls back to the proxy's IP address. This causes all users to share the same IP for rate limiting, resulting in a shared rate-limiting Denial of Service (DoS) for the entire application.
+**Prevention:** Always configure `trust proxy` settings in Express when deploying behind load balancers or reverse proxies (e.g., Cloud Run, Nginx) so client IPs are accurately resolved from the `X-Forwarded-For` header.
