@@ -21,6 +21,7 @@ setInterval(() => {
 
 async function startServer() {
   const app = express();
+  app.set('trust proxy', 1); // Trust reverse proxy to accurately resolve client IP
   const PORT = 3000;
 
   // 🛡️ Security Enhancement: Limit payload size to prevent DoS
