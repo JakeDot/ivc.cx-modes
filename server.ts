@@ -21,6 +21,12 @@ setInterval(() => {
 
 async function startServer() {
   const app = express();
+
+  // 🛡️ Security Enhancement: Trust the first proxy hop to correctly resolve client IPs
+  // This is required when running behind a reverse proxy (e.g. Cloud Run) to prevent
+  // shared rate limiting DoS attacks where all clients are seen as the proxy's IP.
+  app.set('trust proxy', 1);
+
   const PORT = 3000;
 
   // 🛡️ Security Enhancement: Limit payload size to prevent DoS
