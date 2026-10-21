@@ -8,3 +8,7 @@
 ## 2024-03-22 - Extracted address parsing into useMemo
 **Learning:** The React application (`App.tsx`) was performing heavy string parsing, matrix matching, and object manipulation on an `address` string (e.g. `ivc://host/#feed/&config`) directly in the render function on *every single re-render* (including during input typing). This pattern causes major CPU bottlenecks and slow React commit phases.
 **Action:** Always wrap non-trivial pure computations, string matchers, regex extraction, or complex derived states into `useMemo` blocks keyed to the minimal amount of primitive/reactive dependencies required (in this case: `address`, `negatedModes`, `manualFacet`). This prevents re-evaluation during normal keystrokes.
+
+## 2024-10-18 - Precomputing Set Lookups for Large List Renders
+**Learning:** In the highly dense IVC Object Bus Fabric, doing linear array lookups (`.includes()` or `.some()`) on dynamic user lists (bookmarks, likes, ignored, banned) inside loop constructs like `renderPost` or `visiblePostsMemo.filter` causes O(N*M) main thread blocking during re-renders, especially because list virtualization is missing.
+**Action:** Always precompute array-based lookups into `Set<string>` objects using `useMemo` at the unconditional top level of the component to turn these into O(1) `.has()` checks, protecting the React commit phase from CPU bottlenecks.
