@@ -23,6 +23,10 @@ async function startServer() {
   const app = express();
   const PORT = 3000;
 
+  // 🛡️ Security Enhancement: Trust proxy to accurately resolve client IPs
+  // Prevents shared rate limiting DoS when deployed behind reverse proxy
+  app.set('trust proxy', 1);
+
   // 🛡️ Security Enhancement: Limit payload size to prevent DoS
   app.use(express.json({ limit: '50kb' }));
 
