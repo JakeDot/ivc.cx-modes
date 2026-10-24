@@ -21,6 +21,7 @@ setInterval(() => {
 
 async function startServer() {
   const app = express();
+  app.set('trust proxy', 1); // 🛡️ Security Enhancement: Resolve originating IP behind proxies
   const PORT = 3000;
 
   // 🛡️ Security Enhancement: Limit payload size to prevent DoS
