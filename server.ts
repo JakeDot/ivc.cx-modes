@@ -21,6 +21,10 @@ setInterval(() => {
 
 async function startServer() {
   const app = express();
+
+  // 🛡️ Security Fix: Accurately resolve originating client IPs behind proxy to prevent shared rate limiting DoS
+  app.set('trust proxy', 1);
+
   const PORT = 3000;
 
   // 🛡️ Security Enhancement: Limit payload size to prevent DoS
