@@ -6,3 +6,7 @@
 **Vulnerability:** Overly permissive defaults on `express.json()` and `cors()` in Express setup.
 **Learning:** By default, `express.json()` allows unlimited payload sizes, which can lead to DoS attacks via memory exhaustion. Similarly, `cors()` without options allows all origins, which can lead to unauthorized cross-origin requests.
 **Prevention:** Always configure `express.json({ limit: '...' })` and define a strict `origin` array/function for `cors()`.
+## 2025-03-09 - [Missing Content-Security-Policy Header]
+**Vulnerability:** [The application lacked a Content-Security-Policy (CSP) header, which is critical for mitigating Cross-Site Scripting (XSS) attacks by controlling the resources the user agent is allowed to load.]
+**Learning:** [Without CSP, modern web applications are vulnerable to XSS if an attacker manages to inject malicious scripts into the frontend.]
+**Prevention:** [Always implement a baseline Content-Security-Policy header in Express applications to enforce strict resource loading policies.]
