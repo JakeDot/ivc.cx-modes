@@ -6,3 +6,7 @@
 **Vulnerability:** Overly permissive defaults on `express.json()` and `cors()` in Express setup.
 **Learning:** By default, `express.json()` allows unlimited payload sizes, which can lead to DoS attacks via memory exhaustion. Similarly, `cors()` without options allows all origins, which can lead to unauthorized cross-origin requests.
 **Prevention:** Always configure `express.json({ limit: '...' })` and define a strict `origin` array/function for `cors()`.
+## 2026-11-03 - Missing Content-Security-Policy Header
+**Vulnerability:** The application lacked a Content-Security-Policy (CSP) header, which could allow execution of malicious scripts (XSS) or loading resources from untrusted external sources.
+**Learning:** During initial development, standard Express security headers were added (like X-XSS-Protection), but CSP was omitted, likely due to complexity with Vite/React HMR and external assets.
+**Prevention:** Always implement a robust baseline CSP header and explicitly whitelist necessary external domains (`api.github.com`, `avatars.githubusercontent.com`).
