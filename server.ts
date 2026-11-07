@@ -45,6 +45,22 @@ async function startServer() {
     res.setHeader("X-Content-Type-Options", "nosniff");
     res.setHeader("X-Frame-Options", "DENY");
     res.setHeader("X-XSS-Protection", "1; mode=block");
+
+    // Strict Content-Security-Policy (CSP) to mitigate XSS and restrict external domains
+    const csp = [
+      "default-src 'self'",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+      "style-src 'self' 'unsafe-inline'",
+      "img-src 'self' data: https://avatars.githubusercontent.com",
+      "connect-src 'self' ws: wss: https://api.github.com",
+      "font-src 'self' data:",
+      "object-src 'none'",
+      "base-uri 'self'",
+      "form-action 'self'",
+      "frame-ancestors 'none'"
+    ].join("; ");
+    res.setHeader("Content-Security-Policy", csp);
+
     next();
   });
 
