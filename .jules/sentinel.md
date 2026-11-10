@@ -6,3 +6,7 @@
 **Vulnerability:** Overly permissive defaults on `express.json()` and `cors()` in Express setup.
 **Learning:** By default, `express.json()` allows unlimited payload sizes, which can lead to DoS attacks via memory exhaustion. Similarly, `cors()` without options allows all origins, which can lead to unauthorized cross-origin requests.
 **Prevention:** Always configure `express.json({ limit: '...' })` and define a strict `origin` array/function for `cors()`.
+## 2025-03-09 - [Missing Content-Security-Policy (CSP) Header]
+**Vulnerability:** [The application lacked a Content-Security-Policy, leaving it vulnerable to XSS and data injection attacks if input validation were ever bypassed.]
+**Learning:** [When configuring CSP for modern frameworks like Vite, you must explicitly allow 'unsafe-inline'/'unsafe-eval' for scripts and styles, as well as ws: and wss: for HMR to avoid breaking the local development environment.]
+**Prevention:** [Always implement a strict CSP by default, systematically whitelisting only the necessary external APIs (like GitHub) and CDNs required by the application.]
